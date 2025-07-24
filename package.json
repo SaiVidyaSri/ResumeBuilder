@@ -1,0 +1,32 @@
+{
+  "name": "resume-builder-website",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "dashboard-script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cheerio": "^1.1.0",
+    "cors": "^2.8.5",
+    "docx": "^9.5.1",
+    "express": "^5.1.0",
+    "handlebars": "^4.7.8",
+    "html-pdf-node": "^1.0.8",
+    "html-to-docx": "^1.8.0",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.9.1",
+    "moment": "^2.30.1",
+    "mongoose": "^8.16.2",
+    "multer": "^2.0.1",
+    "nodemailer": "^7.0.5",
+    "officegen": "^0.6.5",
+    "path": "^0.12.7",
+    "puppeteer": "^24.14.0"
+  }
+}

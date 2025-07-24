@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextHire - Dashboard</title>
+    <link rel="stylesheet" href="../styles/styles.css"> 
+    <link rel="stylesheet" href="../styles/dashboard-styles.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/jpg" href="images/logo.jpg">
+
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar dashboard-nav">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-placeholder">
+                    <img src="../images/logo.jpg" alt = "logo">
+                </div>
+                <span>NEXTHIRE</span>
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html" class="active">My resumes</a>
+                <a href="favorites.html">Favourites</a>
+                <a href="templates.html">Templates</a>
+                <div class="user-profile-nav">
+                    <div class="profile-icon" id="profileIcon">
+                        <img src="../images/profile.jpeg" alt="Profile">
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="profile.html" class="dropdown-item">My profile</a>
+                        <a href="favorites.html" class="dropdown-item">Saved Templates</a>
+                        <a href="profile.html" class="dropdown-item">Account Settings</a>
+                        <a href="logout.html" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            </div>
+            <div class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="dashboard-main">
+        <div class="container">
+            <section class="welcome-section">
+                <h1>Welcome, to NextHire!!</h1>
+                <p>Let's build a resume that gets hired you...</p>
+                <div class="action-buttons">
+                    <a class="primary-btn " href="resume-editor.html">Create Resume</a>
+                    <a class="secondary-btn " href="templates.html">Browse Templates</a>
+                </div>
+            </section>
+
+            <section class="your-resumes-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-alt"></i> Your Resumes</h2>
+                    <div class="section-actions">
+                        <button id="refreshResumes" class="refresh-btn" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <a href="resume-editor.html" class="add-resume-btn">
+                            <i class="fas fa-plus"></i> Create New
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="resumesLoading" class="loading-container" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Loading your resumes...</p>
+                </div>
+                
+                <!-- Error State -->
+                <div id="resumesError" class="error-container" style="display: none;">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Unable to Load Resumes</h3>
+                    <p id="errorMessage">Something went wrong while loading your resumes.</p>
+                    <button id="retryLoadResumes" class="retry-btn">
+                        <i class="fas fa-redo"></i> Try Again
+                    </button>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="resumesEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>No Resumes Yet</h3>
+                    <p>You haven't created any resumes yet. Start by choosing a template and customizing it to your needs.</p>
+                    <a href="resume-editor.html" class="primary-btn create-first-resume-btn">
+                        <i class="fas fa-plus"></i> Create Your First Resume
+                    </a>
+                </div>
+                
+                <!-- Resume Cards Container -->
+                <div id="resumeCards" class="resume-cards">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+                
+                <!-- Pagination (if needed for many resumes) -->
+                <div id="resumesPagination" class="pagination-container" style="display: none;">
+                    <!-- Pagination controls will be generated here -->
+                </div>
+            </section>
+
+            <section class="statistics-section">
+                <h2><i class="fas fa-chart-line"></i> Statistics</h2>
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-value">2</div>
+                        <div class="stat-label">resumes created</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Downloads</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">2 days ago</div>
+                        <div class="stat-label">Last Edited</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="how-it-works-section">
+                <h2><i class="fas fa-lightbulb"></i> How it works?</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>Fill Your info</h3>
+                        <p>Through our online resume maker, fill in your necessary details like your projects, skills, internships, etc.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>Choose a template</h3>
+                        <p>Choose an ATS-friendly resume template from our list. You can switch to other templates as well, anytime!</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3>Download your resume</h3>
+                        <p>Download your resume as a PDF and send it to potential employers. Yes, It's that easy!</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+    </main>
+    <!-- Download Format Selection Modal -->
+    <div id="downloadFormatModal" class="modal-overlay">
+        <div class="modal-container download-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-download"></i> Download Template</h3>
+                <button class="close-modal" id="closeDownloadModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="download-options">
+                    <p class="download-description">
+                        Choose your preferred format to download the template:
+                    </p>
+                    
+                    <div class="format-options">
+                        <div class="format-option" data-format="pdf">
+                            <div class="format-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="format-details">
+                                <h4>PDF Format</h4>
+                                <p>Perfect for printing and professional presentation. Maintains exact formatting and layout.</p>
+                                <div class="format-benefits">
+                                    <span class="benefit-tag">Print-ready</span>
+                                    <span class="benefit-tag">Universal compatibility</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="format-option" data-format="word">
+                            <div class="format-icon">
+                                <i class="fas fa-file-word"></i>
+                            </div>
+                            <div class="format-details">
+                                <h4>Word Document</h4>
+                                <p>Fully editable document for easy customization. Compatible with Microsoft Word and similar editors.</p>
+                                <div class="format-benefits">
+                                    <span class="benefit-tag">Fully editable</span>
+                                    <span class="benefit-tag">Easy customization</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="download-preview">
+                        <h4>Current Customizations:</h4>
+                        <div class="customization-summary">
+                            <div class="customization-item">
+                                <span class="label">Color Scheme:</span>
+                                <span class="value" id="downloadPreviewColorScheme">Default</span>
+                            </div>
+                            <div class="customization-item">
+                                <span class="label">Font Family:</span>
+                                <span class="value" id="downloadPreviewFontFamily">Default</span>
+                            </div>
+                            <div class="customization-item">
+                                <span class="label">Layout Style:</span>
+                                <span class="value" id="downloadPreviewLayoutStyle">Default</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelDownload">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button class="btn btn-primary" id="confirmDownload" disabled>
+                    <i class="fas fa-download"></i>
+                    <span class="btn-text">Download</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#">My Resumes</a></li>
+                        <li><a href="#">Templates</a></li>
+                        <li><a href="#">Profile</a></li>
+                        <li><a href="#">Settings</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Help</h3>
+                    <ul>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Contact Support</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Follow us</h3>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
+            </div>
+        </div>
+    </footer>
+
+    
+
+    <script src="../scripts/dashboard-script.js"></script>
+</body>
+</html>

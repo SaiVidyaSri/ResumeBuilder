@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAI VIDYA SRI DONTHAGANI - Resume</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica', sans-serif; font-size: 11pt; line-height: 1.4; color: #333; background: white; max-width: 8.5in; margin: 0 auto; padding: 0.75in; }
+        .header { margin-bottom: 30pt; }
+        .name { font-size: 24pt; font-weight: 300; margin-bottom: 5pt; color: #000; }
+        .title { font-size: 14pt; color: #666; margin-bottom: 15pt; font-weight: 300; }
+        .contact-info { font-size: 10pt; color: #666; border-top: 1pt solid #ddd; padding-top: 10pt; }
+        .section { margin-bottom: 25pt; }
+        .section-title { font-size: 12pt; font-weight: 600; color: #000; margin-bottom: 10pt; text-transform: uppercase; letter-spacing: 1pt; }
+        .summary { text-align: justify; color: #555; margin-bottom: 20pt; }
+        .experience-item { margin-bottom: 20pt; }
+        .job-header { margin-bottom: 5pt; }
+        .job-title { font-weight: 600; font-size: 12pt; color: #000; }
+        .company-date { font-size: 10pt; color: #666; margin-top: 2pt; }
+        .job-description ul { margin-left: 20pt; margin-top: 5pt; }
+        .job-description li { margin-bottom: 3pt; color: #555; }
+        .skills-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15pt; }
+        .skill-category h4 { font-size: 10pt; font-weight: 600; color: #000; margin-bottom: 5pt; text-transform: uppercase; }
+        .skill-category p { font-size: 9pt; color: #666; line-height: 1.3; }
+        .education-item { margin-bottom: 10pt; }
+        .degree { font-weight: 600; color: #000; }
+        .school { color: #666; margin-top: 2pt; }
+        .education-details { font-size: 10pt; color: #999; margin-top: 2pt; }
+        .projects-list { list-style: none; }
+        .projects-list li { margin-bottom: 15pt; padding-bottom: 10pt; border-bottom: 1pt solid #eee; }
+        .project-title { font-weight: 600; color: #000; margin-bottom: 3pt; }
+        .project-description { color: #555; margin-bottom: 3pt; text-align: justify; }
+        .tech-stack { font-size: 9pt; color: #999; font-style: italic; }
+        .certifications { list-style: none; }
+        .certifications li { margin-bottom: 5pt; color: #555; }
+        .cert-name { font-weight: 600; color: #000; }
+        .cert-year { color: #999; font-size: 10pt; }
+        @media print { body { padding: 0.5in; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div id="name" class="name">SAI VIDYA SRI DONTHAGANI</div>
+        <div id="title" class="title">Software Developer</div>
+        <div class="contact-info">
+            <span id="email">vidyadonthagani@gmail.com</span> • 
+            <span id="phone">9347502589</span> • 
+            <span id="location">Tenali, Andhra Pradesh</span> • 
+            <span id="linkedin">linkedin.com/in/saividyasri</span>
+        </div>
+    </div>
+
+    <div id="summary-section" class="section">
+        <div class="section-title">Summary</div>
+        <div id="summary" class="summary">
+            Dedicated Software Developer with 2+ years of experience in full-stack web development. Proficient in Java, JavaScript, React.js, and Node.js. Proven track record of developing scalable web applications and optimizing system performance. Strong problem-solving abilities and excellent collaboration skills in agile development environments.
+        </div>
+    </div>
+
+    <div id="experience-section" class="section">
+        <div class="section-title">Experience</div>
+        <div id="experience-container">
+            <!-- Experience items will be dynamically inserted here -->
+            <div class="experience-item">
+                <div class="job-header">
+                    <div class="job-title">Software Developer</div>
+                    <div class="company-date">Tech Solutions Pvt Ltd • January 2023 – Present</div>
+                </div>
+                <div class="job-description">
+                    <ul>
+                        <li>Developed and maintained responsive web applications using React.js and modern JavaScript frameworks</li>
+                        <li>Implemented RESTful APIs and microservices architecture using Node.js and Express.js</li>
+                        <li>Collaborated with cross-functional teams to deliver high-quality software solutions on time</li>
+                        <li>Optimized application performance resulting in 40% improvement in page load times</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="experience-item">
+                <div class="job-header">
+                    <div class="job-title">Junior Developer</div>
+                    <div class="company-date">Digital Innovations Ltd • June 2022 – December 2022</div>
+                </div>
+                <div class="job-description">
+                    <ul>
+                        <li>Assisted in development of client-facing web applications using modern frameworks</li>
+                        <li>Performed comprehensive testing and debugging to ensure software quality</li>
+                        <li>Supported senior developers in project implementation and code maintenance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="skills-section" class="section">
+        <div class="section-title">Skills</div>
+        <div id="skills-container" class="skills-grid">
+            <!-- Skill categories will be dynamically inserted here -->
+            <div class="skill-category">
+                <h4>Programming</h4>
+                <p>Java<br>JavaScript<br>Python<br>C++</p>
+            </div>
+            <div class="skill-category">
+                <h4>Frontend</h4>
+                <p>React.js<br>HTML5<br>CSS3<br>Bootstrap</p>
+            </div>
+            <div class="skill-category">
+                <h4>Backend</h4>
+                <p>Node.js<br>Express.js<br>Spring Boot<br>RESTful APIs</p>
+            </div>
+            <div class="skill-category">
+                <h4>Database & Tools</h4>
+                <p>MySQL<br>MongoDB<br>Git<br>Docker<br>AWS</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="education-section" class="section">
+        <div class="section-title">Education</div>
+        <div id="education-container">
+            <!-- Education items will be dynamically inserted here -->
+            <div class="education-item">
+                <div class="degree">Bachelor of Technology in Computer Science Engineering</div>
+                <div class="school">Andhra University</div>
+                <div class="education-details">2018 - 2022 • CGPA: 8.2/10</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="projects-section" class="section">
+        <div class="section-title">Projects</div>
+        <ul id="projects-container" class="projects-list">
+            <!-- Project items will be dynamically inserted here -->
+            <li>
+                <div class="project-title">E-commerce Web Application</div>
+                <div class="project-description">
+                    Developed a comprehensive e-commerce platform featuring user authentication, product catalog management, shopping cart functionality, and secure payment gateway integration.
+                </div>
+                <div class="tech-stack">React.js, Node.js, MongoDB, Stripe API, JWT Authentication</div>
+            </li>
+            <li>
+                <div class="project-title">Task Management System</div>
+                <div class="project-description">
+                    Created a collaborative project management application with real-time updates, user role management, and team collaboration features.
+                </div>
+                <div class="tech-stack">Vue.js, Express.js, Socket.io, MySQL, JWT</div>
+            </li>
+            <li>
+                <div class="project-title">Weather Forecast Application</div>
+                <div class="project-description">
+                    Built a mobile-responsive weather application providing location-based forecasts and interactive weather maps with data visualization.
+                </div>
+                <div class="tech-stack">React.js, Chart.js, Weather API, Geolocation API</div>
+            </li>
+        </ul>
+    </div>
+
+    <div id="certifications-section" class="section">
+        <div class="section-title">Certifications</div>
+        <ul id="certifications-container" class="certifications">
+            <!-- Certifications will be dynamically inserted here -->
+            <li><span class="cert-name">Oracle Certified Java Programmer</span> <span class="cert-year">(2023)</span></li>
+            <li><span class="cert-name">AWS Cloud Practitioner</span> <span class="cert-year">(2022)</span></li>
+            <li><span class="cert-name">Google Analytics Certified</span> <span class="cert-year">(2022)</span></li>
+        </ul>
+    </div>
+</body>
+</html>

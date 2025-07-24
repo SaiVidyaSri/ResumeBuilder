@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextHire - User Profile</title>
+    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/dashboard-styles.css">
+    <link rel="stylesheet" href="../styles/profile-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/jpg" href="../images/logo.jpg">
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar dashboard-nav">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-placeholder">
+                    <img src="../images/logo.jpg" alt="logo">
+                </div>
+                <span>NEXTHIRE</span>
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html">My resumes</a>
+                <a href="favorites.html">Favourites</a>
+                <a href="templates.html">Templates</a>
+                <div class="user-profile-nav">
+                    <div class="profile-icon" id="profileIcon">
+                        <img src="../images/profile.jpeg" alt="Profile">
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="profile.html" class="dropdown-item active">My profile</a>
+                        <a href="favorites.html" class="dropdown-item">Saved Templates</a>
+                        <a href="profile.html" class="dropdown-item">Account Settings</a>
+                        <a href="logout.html" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            </div>
+            <div class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Profile Content -->
+    <main class="profile-main">
+        <div class="container">
+            <div class="profile-header">
+                <h1>My Profile</h1>
+                <p>Manage your personal information and account settings</p>
+            </div>
+
+            <div class="profile-container">
+                <!-- Profile Card -->
+                <section class="profile-card">
+                    <div class="profile-avatar-large">
+                        <div class="avatar-container">
+                            <div class="avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <button class="change-avatar-btn">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-details">
+                        <h2 class="profile-name">SAI VIDYA SRI DONTHAGANI</h2>
+                        <p class="profile-meta">Member since January 2025</p>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">2</span>
+                                <span class="stat-label">Resumes</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">5</span>
+                                <span class="stat-label">Downloads</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">3</span>
+                                <span class="stat-label">Templates</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Profile Tabs -->
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="personal-info">Personal Information</button>
+                    <button class="tab-btn" data-tab="account-settings">Account Settings</button>
+                    <button class="tab-btn" data-tab="privacy-security">Privacy & Security</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Personal Information Tab -->
+                    <div class="tab-pane active" id="personal-info">
+                        <form class="profile-form">
+                            <div class="form-group">
+                                <label for="fullName">Full Name</label>
+                                <input type="text" id="fullName" value="SAI VIDYA SRI DONTHAGANI">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="email">Email Address</label>
+                                    <input type="email" id="email" value="vidyadonthagani@gmail.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" id="phone" value="9347502589">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <input type="text" id="location" value="Tenali, Andhra Pradesh">
+                            </div>
+                            <div class="form-group">
+                                <label for="bio">Professional Summary</label>
+                                <textarea id="bio" rows="4" placeholder="Write a brief professional summary..."></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="secondary-btn">Cancel</button>
+                                <button type="submit" class="primary-btn">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Account Settings Tab -->
+                    <div class="tab-pane" id="account-settings">
+                        <form class="profile-form">
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" value="vidyasri">
+                            </div>
+                            <div class="form-group">
+                                <label for="language">Language</label>
+                                <select id="language">
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                    <option value="hi">Hindi</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="timezone">Timezone</label>
+                                <select id="timezone">
+                                    <option value="IST">Indian Standard Time (IST)</option>
+                                    <option value="PST">Pacific Standard Time (PST)</option>
+                                    <option value="EST">Eastern Standard Time (EST)</option>
+                                    <option value="GMT">Greenwich Mean Time (GMT)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Notifications</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked> Resume updates and tips
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked> New templates and features
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox"> Marketing and promotional emails
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="secondary-btn">Cancel</button>
+                                <button type="submit" class="primary-btn">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Privacy & Security Tab -->
+                    <div class="tab-pane" id="privacy-security">
+                        <form class="profile-form">
+                            <div class="form-group">
+                                <label for="currentPassword">Current Password</label>
+                                <input type="password" id="currentPassword" placeholder="Enter your current password">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newPassword">New Password</label>
+                                    <input type="password" id="newPassword" placeholder="Enter new password">
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword">Confirm New Password</label>
+                                    <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                                </div>
+                            </div>
+                            <div class="password-requirements">
+                                <p>Password must:</p>
+                                <ul>
+                                    <li>Be at least 8 characters long</li>
+                                    <li>Include at least one uppercase letter</li>
+                                    <li>Include at least one number</li>
+                                    <li>Include at least one special character</li>
+                                </ul>
+                            </div>
+                            <div class="form-group">
+                                <label>Privacy Settings</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked> Allow profile to be discoverable by recruiters
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked> Enable two-factor authentication
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" checked> Allow data collection for personalized experience
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="danger-btn">Delete Account</button>
+                                <button type="submit" class="primary-btn">Update Security Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="dashboard.html">My Resumes</a></li>
+                        <li><a href="templates.html">Templates</a></li>
+                        <li><a href="profile.html">Profile</a></li>
+                        <li><a href="#">Settings</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Help</h3>
+                    <ul>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Contact Support</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Follow us</h3>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
+            </div>
+        </div>
+    </footer>
+    <!-- Logout Modal -->
+    <div class="logout-modal" id="logoutModal">
+        <div class="logout-modal-content">
+            <h3>Logout Confirmation</h3>
+            <p>Are you sure you want to logout from your account?</p>
+            <div class="logout-modal-actions">
+                <button class="cancel-btn">Cancel</button>
+                <a href="logout.html" class="dropdown-item logout-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="../scripts/dashboard-script.js"></script>
+    <script src="../scripts/profile-script.js"></script>
+</body>
+</html>

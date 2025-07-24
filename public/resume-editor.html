@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextHire - Resume Editor</title>
+    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/dashboard-styles.css">
+    <link rel="stylesheet" href="../styles/resume-editor-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/jpg" href="../images/logo.jpg">
+    
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar dashboard-nav">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-placeholder">
+                    <img src="../images/logo.jpg" alt="logo">
+                </div>
+                <span>NEXTHIRE</span>
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html">My resumes</a>
+                <a href="favorites.html">Favourites</a>
+                <a href="templates.html">Templates</a>
+                <div class="user-profile-nav">
+                    <div class="profile-icon" id="profileIcon">
+                        <img src="../images/profile.jpeg" alt="Profile">
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="profile.html" class="dropdown-item">My profile</a>
+                        <a href="favorites.html" class="dropdown-item">Saved Templates</a>
+                        <a href="profile.html" class="dropdown-item">Account Settings</a>
+                        <a href="logout.html" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            </div>
+            <div class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Editor Content -->
+    <main class="editor-main">
+        <div class="container">
+            <div class="editor-header">
+                <h1>Let's start with your resume content</h1>
+                <p>You can choose a template later!</p>
+            </div>
+
+            <div class="editor-notice">
+                <div class="notice-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="notice-content">
+                    <h3>Before You Begin</h3>
+                    <p>Please fill in your resume details carefully. The information you provide will be used to generate your resume across all templates. You can edit or update it anytime.</p>
+                </div>
+            </div>
+
+            <div class="editor-container">
+                <!-- Sidebar Quick Links -->
+                <aside class="editor-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Quick Links</h3>
+                    </div>
+                    <ul class="sidebar-links">
+                        <li></li><a href="#resume-headline" class="sidebar-link active">Resume Headline</a></li>
+                        <li><a href="#key-skills" class="sidebar-link">Key Skills</a></li>
+                        <li><a href="#education" class="sidebar-link">Education</a></li>
+                        <li><a href="#it-skills" class="sidebar-link">IT Skills</a></li>
+                        <li><a href="#projects" class="sidebar-link">Projects</a></li>
+                        <li><a href="#profile-summary" class="sidebar-link">Profile Summary</a></li>
+                        <li><a href="#accomplishments" class="sidebar-link">Accomplishments</a></li>
+                        <li><a href="#career-profile" class="sidebar-link">Career Profile</a></li>
+                        <li><a href="#personal-details" class="sidebar-link">Personal Details</a></li>
+                    </ul>
+                    <!-- <div class="sidebar-footer">
+                        <button class="primary-btn save-all-btn">Save All</button>
+                    </div> -->
+                </aside>
+
+                <!-- Main Editor Content -->
+                <div class="editor-content">
+                    <!-- User Profile Section -->
+                    <section class="profile-section">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                <div class="avatar-container">
+                                    <div class="avatar-placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="completion-indicator">
+                                        <svg viewBox="0 0 36 36">
+                                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <path class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <text x="18" y="20.35" class="percentage">0%</text>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="profile-info">
+                                <h2 class="profile-name" contenteditable="true">SAI VIDYA SRI DONTHAGANI</h2>
+                                <p class="profile-meta">Profile last updated - 19May, 2025</p>
+                                <div class="profile-contact">
+                                    <div class="contact-item">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>vidyadonthagani@gmail.com</span>
+                                    </div>
+                                    <div class="contact-item">
+                                        <i class="fas fa-phone"></i>
+                                        <span>9347502589</span>
+                                    </div>
+                                    <div class="contact-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>Tenali, Andhra Pradesh</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="edit-profile-btn">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                        </div>
+                    </section>
+
+          h          <!-- Resume Sections -->
+                    <section id="resume-headline" class="resume-section">
+                        <div class="section-header">
+                            <h2>Resume Headline <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>It is the first thing recruiters notice in your profile. Write a concise headline introducing yourself to employers.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                        </div>
+                    </section>
+
+                    <section id="key-skills" class="resume-section">
+                        <div class="section-header">
+                            <h2>Key Skills <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>Add skills that highlight your strengths and are relevant to the job you're seeking.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                        </div>
+                    </section>
+
+                    <section id="education" class="resume-section">
+                        <div class="section-header">
+                            <h2>Education <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>Add your educational qualifications, starting with the most recent one.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                            <div class="add-more-section" style="display: none;">
+                                <button class="add-more-btn">Add Another Education</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="it-skills" class="resume-section">
+                        <div class="section-header">
+                            <h2>IT Skills <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>Add technical skills, programming languages, software, or tools you're proficient in.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                        </div>
+                    </section>
+
+                    <section id="projects" class="resume-section">
+                        <div class="section-header">
+                            <h2>Projects <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>Add details about projects you've worked on, including your role and contributions.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                            <div class="add-more-section" style="display: none;">
+                                <button class="add-more-btn">Add Another Project</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="profile-summary" class="resume-section">
+                        <div class="section-header">
+                            <h2>Profile Summary <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>Write a brief summary highlighting your experience, skills, and career goals.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                        </div>
+                    </section>
+
+                    <section id="accomplishments" class="resume-section">
+                        <div class="section-header">
+                            <h2>Accomplishments</h2>
+                        </div>
+                        <div class="section-content">
+                            <p class="section-description">Showcase your credentials by adding relevant certifications, work samples, online profiles, etc.</p>
+                            
+                            <div class="accomplishment-items">
+                                <div class="accomplishment-item">
+                                    <div class="item-header">
+                                        <h3>Online profile</h3>
+                                        <button class="add-btn">ADD</button>
+                                    </div>
+                                    <p class="item-description">Add link to online professional profiles (e.g. LinkedIn, etc.)</p>
+                                    <div class="content-cards" style="display: none;"></div>
+                                </div>
+                                
+                                <div class="accomplishment-item">
+                                    <div class="item-header">
+                                        <h3>Work sample</h3>
+                                        <button class="add-btn">ADD</button>
+                                    </div>
+                                    <p class="item-description">Link relevant work samples (e.g. Github, Behance)</p>
+                                    <div class="content-cards" style="display: none;"></div>
+                                </div>
+                                
+                                <div class="accomplishment-item">
+                                    <div class="item-header">
+                                        <h3>Research publication / Journal entry</h3>
+                                        <button class="add-btn">ADD</button>
+                                    </div>
+                                    <p class="item-description">Add links to your online publications</p>
+                                    <div class="content-cards" style="display: none;"></div>
+                                </div>
+                                
+                                <div class="accomplishment-item">
+                                    <div class="item-header">
+                                        <h3>Presentation</h3>
+                                        <button class="add-btn">ADD</button>
+                                    </div>
+                                    <p class="item-description">Add links to your online presentations (e.g. Slide-share presentation links etc.)</p>
+                                    <div class="content-cards" style="display: none;"></div>
+                                </div>
+                                
+                                <div class="accomplishment-item">
+                                    <div class="item-header">
+                                        <h3>Patent</h3>
+                                        <button class="add-btn">ADD</button>
+                                    </div>
+                                    <p class="item-description">Add details of patents you have filed</p>
+                                    <div class="content-cards" style="display: none;"></div>
+                                </div>
+                                
+                                <div class="accomplishment-item">
+                                    <div class="item-header">
+                                        <h3>Certification</h3>
+                                        <button class="add-btn">ADD</button>
+                                    </div>
+                                    <p class="item-description">Add details of certifications you have completed</p>
+                                    <div class="content-cards" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="career-profile" class="resume-section">
+                        <div class="section-header">
+                            <h2>Career Profile <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>Add details about your work experience, including company names, roles, and responsibilities.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                            <div class="add-more-section" style="display: none;">
+                                <button class="add-more-btn">Add Another Experience</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="personal-details" class="resume-section">
+                        <div class="section-header">
+                            <h2>Personal Details <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="empty-state">
+                                <p>Add personal information like date of birth, languages known, etc.</p>
+                                <button class="add-now-btn">Add Now</button>
+                            </div>
+                            <div class="content-cards" style="display: none;"></div>
+                        </div>
+                    </section>
+
+                    <div class="editor-actions">
+                        <button class="secondary-btn back-btn">Back</button>
+                        <button class="primary-btn next-btn">Choose Template</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Templates -->
+    <!-- Resume Headline Modal -->
+    <div class="modal" id="resumeHeadlineModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Resume Headline</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">It is the first thing recruiters notice in your profile. Write a concise headline introducing yourself to employers. (Minimum 5 words)</p>
+                <textarea class="modal-input" placeholder="Enter your resume headline" maxlength="300"></textarea>
+                <div class="character-counter"><span>300</span> character(s) left</div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Skills Modal -->
+    <div class="modal" id="keySkillsModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Key Skills</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add skills that highlight your strengths and are relevant to the job you're seeking.</p>
+                <div class="skills-input-container">
+                    <div class="skills-input-wrapper">
+                        <input type="text" class="skill-input" placeholder="Add a skill (e.g., Project Management)">
+                        <button class="add-skill-btn"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="skills-tags">
+                        <!-- Skills will be added here dynamically -->
+                    </div>
+                </div>
+                <p class="skills-hint">Press Enter or click + to add each skill. You can add up to 15 skills.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Education Modal -->
+    <div class="modal" id="educationModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Education</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add your educational qualifications, starting with the most recent one.</p>
+                <div class="form-group">
+                    <label>Degree/Certificate*</label>
+                    <input type="text" class="modal-input" id="educationDegree" placeholder="e.g., Bachelor of Technology">
+                </div>
+                <div class="form-group">
+                    <label>University/Institute*</label>
+                    <input type="text" class="modal-input" id="educationInstitute" placeholder="e.g., MIT">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Start Year*</label>
+                        <select class="modal-input" id="educationStartYear">
+                            <option value="">Select Year</option>
+                            <!-- Years will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group half">
+                        <label>End Year (or Expected)*</label>
+                        <select class="modal-input" id="educationEndYear">
+                            <option value="">Select Year</option>
+                            <!-- Years will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Field of Study*</label>
+                    <input type="text" class="modal-input" id="educationField" placeholder="e.g., Computer Science">
+                </div>
+                <div class="form-group">
+                    <label>Grade/Score</label>
+                    <input type="text" class="modal-input" id="educationGrade" placeholder="e.g., 3.8 GPA or 85%">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea class="modal-input" id="educationDescription" placeholder="Describe your academic achievements, relevant coursework, etc."></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IT Skills Modal -->
+    <div class="modal" id="itSkillsModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>IT Skills</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add technical skills, programming languages, software, or tools you're proficient in.</p>
+                <div class="form-group">
+                    <label>Skill Name*</label>
+                    <input type="text" class="modal-input" id="itSkillName" placeholder="e.g., Python, Adobe Photoshop, SQL">
+                </div>
+                <div class="form-group">
+                    <label>Proficiency Level*</label>
+                    <select class="modal-input" id="itSkillLevel">
+                        <option value="">Select Level</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                        <option value="Expert">Expert</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Experience (Years)*</label>
+                    <select class="modal-input" id="itSkillExperience">
+                        <option value="">Select Experience</option>
+                        <option value="< 1">Less than 1 year</option>
+                        <option value="1-2">1-2 years</option>
+                        <option value="2-3">2-3 years</option>
+                        <option value="3-5">3-5 years</option>
+                        <option value="5+">5+ years</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Last Used</label>
+                    <select class="modal-input" id="itSkillLastUsed">
+                        <option value="">Select When</option>
+                        <option value="Currently Using">Currently Using</option>
+                        <option value="< 1">Less than 1 year ago</option>
+                        <option value="1-2">1-2 years ago</option>
+                        <option value="2-3">2-3 years ago</option>
+                        <option value="3+">3+ years ago</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Version/Details (Optional)</label>
+                    <input type="text" class="modal-input" id="itSkillVersion" placeholder="e.g., Python 3.9, Photoshop CC 2023">
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Modal -->
+    <div class="modal" id="projectsModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Projects</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add details about projects you've worked on, including your role and contributions.</p>
+                <div class="form-group">
+                    <label>Project Title*</label>
+                    <input type="text" class="modal-input" id="projectTitle" placeholder="e.g., E-commerce Website Development">
+                </div>
+                <div class="form-group">
+                    <label>Client/Organization (Optional)</label>
+                    <input type="text" class="modal-input" id="projectClient" placeholder="e.g., ABC Company">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Start Date*</label>
+                        <input type="month" class="modal-input" id="projectStartDate">
+                    </div>
+                    <div class="form-group half">
+                        <label>End Date*</label>
+                        <div class="date-input-group">
+                            <input type="month" class="modal-input" id="projectEndDate">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="projectOngoing">
+                                <label for="projectOngoing">Ongoing</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Project URL (Optional)</label>
+                    <input type="url" class="modal-input" id="projectUrl" placeholder="e.g., https://project-website.com">
+                </div>
+                <div class="form-group">
+                    <label>Your Role*</label>
+                    <input type="text" class="modal-input" id="projectRole" placeholder="e.g., Lead Developer, UX Designer">
+                </div>
+                <div class="form-group">
+                    <label>Skills Used*</label>
+                    <div class="skills-input-container">
+                        <div class="skills-input-wrapper">
+                            <input type="text" class="skill-input" placeholder="Add skills used (e.g., React.js)">
+                            <button class="add-skill-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div class="skills-tags project-skills">
+                            <!-- Skills will be added here dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Project Description*</label>
+                    <textarea class="modal-input" id="projectDescription" placeholder="Describe the project, your responsibilities, and achievements"></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Summary Modal -->
+    <div class="modal" id="profileSummaryModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Profile Summary</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Write a brief summary highlighting your experience, skills, and career goals.</p>
+                <textarea class="modal-input" id="profileSummaryText" placeholder="Write your profile summary here (recommended 100-200 words)" maxlength="2000"></textarea>
+                <div class="character-counter"><span>2000</span> character(s) left</div>
+                <div class="summary-tips">
+                    <h4>Tips for a great profile summary:</h4>
+                    <ul>
+                        <li>Keep it concise and focused on your most relevant skills and experiences</li>
+                        <li>Highlight your unique value proposition and career achievements</li>
+                        <li>Include keywords relevant to your target industry or role</li>
+                        <li>Mention your career goals and what you're looking for</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Profile Modal -->
+    <div class="modal" id="onlineProfileModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Online Profile</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add link to online professional profiles (e.g. LinkedIn, etc.)</p>
+                <div class="form-group">
+                    <label>Profile Type*</label>
+                    <select class="modal-input" id="profileType">
+                        <option value="">Select Profile Type</option>
+                        <option value="LinkedIn">LinkedIn</option>
+                        <option value="Twitter">Twitter</option>
+                        <option value="Portfolio">Portfolio Website</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="otherProfileTypeGroup" style="display: none;">
+                    <label>Specify Profile Type*</label>
+                    <input type="text" class="modal-input" id="otherProfileType" placeholder="e.g., Medium, Stack Overflow">
+                </div>
+                <div class="form-group">
+                    <label>Profile URL*</label>
+                    <input type="url" class="modal-input" id="profileUrl" placeholder="e.g., https://linkedin.com/in/yourprofile">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea class="modal-input" id="profileDescription" placeholder="Brief description of your profile"></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Sample Modal -->
+    <div class="modal" id="workSampleModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Work Sample</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Link relevant work samples (e.g. Github, Behance)</p>
+                <div class="form-group">
+                    <label>Sample Type*</label>
+                    <select class="modal-input" id="sampleType">
+                        <option value="">Select Sample Type</option>
+                        <option value="GitHub">GitHub Repository</option>
+                        <option value="Behance">Behance Project</option>
+                        <option value="Dribbble">Dribbble Shot</option>
+                        <option value="CodePen">CodePen</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="otherSampleTypeGroup" style="display: none;">
+                    <label>Specify Sample Type*</label>
+                    <input type="text" class="modal-input" id="otherSampleType" placeholder="e.g., JSFiddle, Personal Website">
+                </div>
+                <div class="form-group">
+                    <label>Sample Title*</label>
+                    <input type="text" class="modal-input" id="sampleTitle" placeholder="e.g., E-commerce Website Frontend">
+                </div>
+                <div class="form-group">
+                    <label>Sample URL*</label>
+                    <input type="url" class="modal-input" id="sampleUrl" placeholder="e.g., https://github.com/yourusername/project">
+                </div>
+                <div class="form-group">
+                    <label>Description*</label>
+                    <textarea class="modal-input" id="sampleDescription" placeholder="Brief description of your work sample"></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publication Modal -->
+    <div class="modal" id="publicationModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>White paper / Research publication / Journal entry</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add links to your online publications</p>
+                <div class="form-group">
+                    <label>Publication Type*</label>
+                    <select class="modal-input" id="publicationType">
+                        <option value="">Select Publication Type</option>
+                        <option value="White Paper">White Paper</option>
+                        <option value="Research Paper">Research Paper</option>
+                        <option value="Journal Article">Journal Article</option>
+                        <option value="Conference Paper">Conference Paper</option>
+                        <option value="Book Chapter">Book Chapter</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="otherPublicationTypeGroup" style="display: none;">
+                    <label>Specify Publication Type*</label>
+                    <input type="text" class="modal-input" id="otherPublicationType" placeholder="e.g., Blog Post, Case Study">
+                </div>
+                <div class="form-group">
+                    <label>Title*</label>
+                    <input type="text" class="modal-input" id="publicationTitle" placeholder="e.g., Advances in Machine Learning Algorithms">
+                </div>
+                <div class="form-group">
+                    <label>Publication/Journal Name*</label>
+                    <input type="text" class="modal-input" id="publicationName" placeholder="e.g., Journal of Computer Science">
+                </div>
+                <div class="form-group">
+                    <label>Publication Date*</label>
+                    <input type="month" class="modal-input" id="publicationDate">
+                </div>
+                <div class="form-group">
+                    <label>URL (Optional)</label>
+                    <input type="url" class="modal-input" id="publicationUrl" placeholder="e.g., https://journal.com/your-article">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea class="modal-input" id="publicationDescription" placeholder="Brief description of your publication"></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Presentation Modal -->
+    <div class="modal" id="presentationModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Presentation</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add links to your online presentations (e.g. Slide-share presentation links etc.)</p>
+                <div class="form-group">
+                    <label>Presentation Title*</label>
+                    <input type="text" class="modal-input" id="presentationTitle" placeholder="e.g., Modern Web Development Techniques">
+                </div>
+                <div class="form-group">
+                    <label>Platform*</label>
+                    <select class="modal-input" id="presentationPlatform">
+                        <option value="">Select Platform</option>
+                        <option value="SlideShare">SlideShare</option>
+                        <option value="Google Slides">Google Slides</option>
+                        <option value="Prezi">Prezi</option>
+                        <option value="Speaker Deck">Speaker Deck</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="otherPlatformGroup" style="display: none;">
+                    <label>Specify Platform*</label>
+                    <input type="text" class="modal-input" id="otherPlatform" placeholder="e.g., Canva, PowerPoint Online">
+                </div>
+                <div class="form-group">
+                    <label>Presentation URL*</label>
+                    <input type="url" class="modal-input" id="presentationUrl" placeholder="e.g., https://slideshare.net/your-presentation">
+                </div>
+                <div class="form-group">
+                    <label>Presentation Date (Optional)</label>
+                    <input type="month" class="modal-input" id="presentationDate">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea class="modal-input" id="presentationDescription" placeholder="Brief description of your presentation"></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patent Modal -->
+    <div class="modal" id="patentModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Patent</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add details of patents you have filed</p>
+                <div class="form-group">
+                    <label>Patent Title*</label>
+                    <input type="text" class="modal-input" id="patentTitle" placeholder="e.g., Method and System for Data Encryption">
+                </div>
+                <div class="form-group">
+                    <label>Patent Office*</label>
+                    <input type="text" class="modal-input" id="patentOffice" placeholder="e.g., USPTO, EPO, IPO">
+                </div>
+                <div class="form-group">
+                    <label>Patent Number*</label>
+                    <input type="text" class="modal-input" id="patentNumber" placeholder="e.g., US 9,123,456">
+                </div>
+                <div class="form-group">
+                    <label>Status*</label>
+                    <select class="modal-input" id="patentStatus">
+                        <option value="">Select Status</option>
+                        <option value="Filed">Filed</option>
+                        <option value="Published">Published</option>
+                        <option value="Granted">Granted</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Filing Date*</label>
+                        <input type="date" class="modal-input" id="patentFilingDate">
+                    </div>
+                    <div class="form-group half">
+                        <label>Issue Date (if granted)</label>
+                        <input type="date" class="modal-input" id="patentIssueDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>URL (Optional)</label>
+                    <input type="url" class="modal-input" id="patentUrl" placeholder="e.g., https://patents.google.com/patent/US9123456">
+                </div>
+                <div class="form-group">
+                    <label>Description*</label>
+                    <textarea class="modal-input" id="patentDescription" placeholder="Brief description of your patent"></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certification Modal -->
+    <div class="modal" id="certificationModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Certification</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add details of certifications you have completed</p>
+                <div class="form-group">
+                    <label>Certification Name*</label>
+                    <input type="text" class="modal-input" id="certificationName" placeholder="e.g., AWS Certified Solutions Architect">
+                </div>
+                <div class="form-group">
+                    <label>Issuing Organization*</label>
+                    <input type="text" class="modal-input" id="certificationOrg" placeholder="e.g., Amazon Web Services">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Issue Date*</label>
+                        <input type="month" class="modal-input" id="certificationIssueDate">
+                    </div>
+                    <div class="form-group half">
+                        <label>Expiry Date</label>
+                        <div class="date-input-group">
+                            <input type="month" class="modal-input" id="certificationExpiryDate">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="certificationNoExpiry">
+                                <label for="certificationNoExpiry">No Expiry</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Credential ID</label>
+                    <input type="text" class="modal-input" id="certificationId" placeholder="e.g., ABC123XYZ">
+                </div>
+                <div class="form-group">
+                    <label>Credential URL (Optional)</label>
+                    <input type="url" class="modal-input" id="certificationUrl" placeholder="e.g., https://www.credential.net/abc123xyz">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea class="modal-input" id="certificationDescription" placeholder="Brief description of your certification"></textarea>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Career Profile Modal -->
+    <div class="modal" id="careerProfileModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Career Profile</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add details about your work experience, including company names, roles, and responsibilities.</p>
+                <div class="form-group">
+                    <label>Job Title*</label>
+                    <input type="text" class="modal-input" id="jobTitle" placeholder="e.g., Senior Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label>Company/Organization*</label>
+                    <input type="text" class="modal-input" id="companyName" placeholder="e.g., Google Inc.">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Start Date*</label>
+                        <input type="month" class="modal-input" id="jobStartDate">
+                    </div>
+                    <div class="form-group half">
+                        <label>End Date*</label>
+                        <div class="date-input-group">
+                            <input type="month" class="modal-input" id="jobEndDate">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="currentlyWorking">
+                                <label for="currentlyWorking">Currently Working</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" class="modal-input" id="jobLocation" placeholder="e.g., San Francisco, CA">
+                </div>
+                <div class="form-group">
+                    <label>Employment Type</label>
+                    <select class="modal-input" id="employmentType">
+                        <option value="">Select Type</option>
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Freelance">Freelance</option>
+                        <option value="Internship">Internship</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Job Description*</label>
+                    <textarea class="modal-input" id="jobDescription" placeholder="Describe your responsibilities, achievements, and key contributions"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Skills Used</label>
+                    <div class="skills-input-container">
+                        <div class="skills-input-wrapper">
+                            <input type="text" class="skill-input" placeholder="Add skills used (e.g., Project Management)">
+                            <button class="add-skill-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div class="skills-tags job-skills">
+                            <!-- Skills will be added here dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <p class="form-note">* Required fields</p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Details Modal -->
+    <div class="modal" id="personalDetailsModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Personal Details</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Add personal information like date of birth, languages known, etc.</p>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" class="modal-input" id="dateOfBirth">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select class="modal-input" id="gender">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Marital Status</label>
+                    <select class="modal-input" id="maritalStatus">
+                        <option value="">Select Status</option>
+                        <option value="Single">Single</option>
+                        <option value="Married">Married</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Languages Known</label>
+                    <div class="languages-container">
+                        <div class="language-entry">
+                            <div class="language-row">
+                                <input type="text" class="modal-input language-name" placeholder="Language name">
+                                <select class="modal-input language-proficiency">
+                                    <option value="">Proficiency</option>
+                                    <option value="Native">Native</option>
+                                    <option value="Fluent">Fluent</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Basic">Basic</option>
+                                </select>
+                                <button class="remove-language-btn"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <button class="add-language-btn"><i class="fas fa-plus"></i> Add Another Language</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nationality</label>
+                    <input type="text" class="modal-input" id="nationality" placeholder="e.g., Indian">
+                </div>
+                <div class="form-group">
+                    <label>Passport Number (Optional)</label>
+                    <input type="text" class="modal-input" id="passportNumber" placeholder="e.g., A1234567">
+                </div>
+                <div class="form-group">
+                    <label>Hobbies & Interests (Optional)</label>
+                    <textarea class="modal-input" id="hobbies" placeholder="e.g., Reading, Photography, Hiking"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">Cancel</button>
+                <button class="primary-btn save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../scripts/resume-editor-script.js"></script>
+</body>
+</html>
+

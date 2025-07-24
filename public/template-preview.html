@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextHire - Template Preview</title>
+    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/dashboard-styles.css">
+    <link rel="stylesheet" href="../styles/templates-styles.css">
+    <link rel="stylesheet" href="../styles/navigation-styles.css">
+    <link rel="stylesheet" href="../styles/template-preview-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/jpg" href="../images/logo.jpg">
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar dashboard-nav">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-placeholder">
+                    <img src="../images/logo.jpg" alt="logo" class="logo-img">
+                </div>
+                <span>NEXTHIRE</span>
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html">My resumes</a>
+                <a href="favorites.html">Favourites</a>
+                <a href="templates.html" class="active">Templates</a>
+                <div class="user-profile-nav">
+                    <div class="profile-icon" id="profileIcon">
+                        <img src="../images/profile.jpeg" alt="Profile">
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="profile.html" class="dropdown-item">
+                            <!-- <i class="fas fa-user"></i> -->
+                             My profile 
+                        </a>
+                        <a href="favorites.html" class="dropdown-item">Saved Templates
+                            <!-- <i class="fas fa-heart"></i>  -->
+                        </a>
+                        <a href="profile.html" class="dropdown-item">Account Settings
+                            <!-- <i class="fas fa-cog"></i>  -->
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="logout.html" class="dropdown-item logout-link">Logout
+                            <!-- <i class="fas fa-sign-out-alt"></i>  -->
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="template-preview-main">
+        <div class="container">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <!-- Will be populated by JavaScript -->
+            </div>
+
+            <div class="template-preview-container">
+            <div class="template-preview-header">
+                <h1 id="template-name">Template Preview</h1>
+                <div class="template-actions">
+                    <!-- Add Download and Save buttons before existing buttons -->
+                    <div class="action-buttons-group">
+                        <button id="favorite-btn" class="secondary-btn">
+                            <i class="far fa-heart"></i> Add to Favorites
+                        </button>
+                    </div>
+                    <div class="action-buttons-group">
+                        <button id="download-btn" class="action-btn download-btn">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button id="save-btn" class="action-btn save-btn">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="template-loading" class="loading-container" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>Loading template...</p>
+            </div>
+
+            <div id="template-error" class="error-container" style="display: none;">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3>Error Loading Template</h3>
+                <p id="error-message">Unable to load template. Please try again.</p>
+                <button id="retry-btn" class="primary-btn">Retry</button>
+            </div>
+
+                <div class="template-preview-content">
+                    <div class="template-preview-sidebar">
+                       <div class="template-info-card">
+                            <h3>Template Information</h3>
+                            <div class="template-info-item">
+                                <span class="info-label">Name:</span>
+                                <span id="info-name" class="info-value">Loading...</span>
+                            </div>
+                            <div class="template-info-item">
+                                <span class="info-label">Category:</span>
+                                <span id="info-category" class="info-value">Loading...</span>
+                            </div>
+                            <div class="template-info-item">
+                                <span class="info-label">Industry:</span>
+                                <span id="info-industry" class="info-value">Loading...</span>
+                            </div>
+                            <div class="template-info-item">
+                                <span class="info-label">Rating:</span>
+                                <span id="info-rating" class="info-value">
+                                    <div class="rating-stars" id="rating-stars">
+                                        <!-- Stars will be populated dynamically -->
+                                    </div>
+                                    <span id="rating-value">(0.0)</span>
+                                </span>
+                            </div>
+                            <div class="template-info-item">
+                                <span class="info-label">Downloads:</span>
+                                <span id="info-downloads" class="info-value">0</span>
+                            </div>
+                        </div>
+
+                        <div class="template-features-card">
+                            <h3>Features</h3>
+                            <ul class="feature-list" id="feature-list">
+                                <!-- Features will be populated dynamically -->
+                                <li class="feature-loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading features...
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="template-options-card">
+                            <h3>Customize Preview</h3>
+                            <div class="option-group">
+                                <label for="color-scheme">Color Scheme:</label>
+                                <select id="color-scheme" class="option-select">
+                                    <option value="default">Default</option>
+                                    <option value="blue">Blue</option>
+                                    <option value="green">Green</option>
+                                    <option value="purple">Purple</option>
+                                    <option value="red">Red</option>
+                                </select>
+                            </div>
+                            <div class="option-group">
+                                <label for="font-family">Font Family:</label>
+                                <select id="font-family" class="option-select">
+                                    <option value="default">Default</option>
+                                    <option value="arial">Arial</option>
+                                    <option value="georgia">Georgia</option>
+                                    <option value="roboto">Roboto</option>
+                                    <option value="montserrat">Montserrat</option>
+                                </select>
+                            </div>
+                            <div class="option-group">
+                                <label for="layout-style">Layout Style:</label>
+                                <select id="layout-style" class="option-select">
+                                    <option value="default">Default</option>
+                                    <option value="compact">Compact</option>
+                                    <option value="expanded">Expanded</option>
+                                    <option value="modern">Modern</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="template-preview-frame">
+                        <div class="preview-controls">
+                            <div class="page-controls">
+                                <button id="prev-page" class="page-btn" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span id="page-indicator">Page 1 of 2</span>
+                                <button id="next-page" class="page-btn">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="zoom-controls">
+                                <button id="zoom-out" class="zoom-btn">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <span id="zoom-level">100%</span>
+                                <button id="zoom-in" class="zoom-btn">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="preview-frame-container">
+                            <iframe id="preview-iframe" src="about:blank" frameborder="0"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="template-preview-footer">
+                <button id="back-to-templates" class="secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Templates
+                </button>
+                <!-- <a id="use-template-btn-bottom" href="section-editor.html" class="primary-btn">
+                    Use This Template
+                </a> -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Save Template Modal -->
+<div id="saveTemplateModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container save-modal">
+        <div class="modal-header">
+            <h3>Save Template</h3>
+            <button class="modal-close" id="closeSaveModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="save-form">
+                <div class="form-group">
+                    <label for="templateName">Template Name</label>
+                    <input 
+                        type="text" 
+                        id="templateName" 
+                        class="form-input" 
+                        placeholder="Enter a name for your template..."
+                        maxlength="100"
+                        required
+                    >
+                    <div class="input-hint">
+                        Choose a descriptive name that will help you identify this template later.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="templateDescription">Description (Optional)</label>
+                    <textarea 
+                        id="templateDescription" 
+                        class="form-textarea" 
+                        placeholder="Add a brief description of your customizations..."
+                        maxlength="500"
+                        rows="3"
+                    ></textarea>
+                </div>
+                
+                <div class="customization-preview">
+                    <h4>Current Customizations</h4>
+                    <div class="customization-list">
+                        <div class="customization-item">
+                            <span class="customization-label">Color Scheme:</span>
+                            <span id="previewColorScheme" class="customization-value">Default</span>
+                        </div>
+                        <div class="customization-item">
+                            <span class="customization-label">Font Family:</span>
+                            <span id="previewFontFamily" class="customization-value">Default</span>
+                        </div>
+                        <div class="customization-item">
+                            <span class="customization-label">Layout Style:</span>
+                            <span id="previewLayoutStyle" class="customization-value">Default</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button id="cancelSave" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button id="confirmSave" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Template
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Place these within your <body> tag, ideally as direct children or within a main container -->
+
+<!-- Loading State Overlay -->
+<div id="loadingIndicator" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p id="loadingMessage">Loading your personalized resume preview...</p>
+    </div>
+</div>
+
+<!-- Error State Container -->
+<div id="errorContainer" class="error-container" style="display: none;">
+    <div class="error-content">
+        <i class="fas fa-exclamation-triangle"></i> <!-- Font Awesome warning icon -->
+        <h3>Error Loading Preview</h3>
+        <p id="errorMessage">An error occurred while loading your resume preview. Please try again.</p>
+        <button onclick="location.reload()" class="btn btn-primary">Try Again</button>
+    </div>
+</div>
+
+<!-- Download Format Selection Modal -->
+<div id="downloadFormatModal" class="modal-overlay">
+    <div class="modal-container download-modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-download"></i> Download Template</h3>
+            <button class="close-modal" id="closeDownloadModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="download-options">
+                <p class="download-description">
+                    Choose your preferred format to download the template:
+                </p>
+                
+                <div class="format-options">
+                    <div class="format-option" data-format="pdf">
+                        <div class="format-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="format-details">
+                            <h4>PDF Format</h4>
+                            <p>Perfect for printing and professional presentation. Maintains exact formatting and layout.</p>
+                            <div class="format-benefits">
+                                <span class="benefit-tag">Print-ready</span>
+                                <span class="benefit-tag">Universal compatibility</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="format-option" data-format="word">
+                        <div class="format-icon">
+                            <i class="fas fa-file-word"></i>
+                        </div>
+                        <div class="format-details">
+                            <h4>Word Document</h4>
+                            <p>Fully editable document for easy customization. Compatible with Microsoft Word and similar editors.</p>
+                            <div class="format-benefits">
+                                <span class="benefit-tag">Fully editable</span>
+                                <span class="benefit-tag">Easy customization</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="download-preview">
+                    <h4>Current Customizations:</h4>
+                    <div class="customization-summary">
+                        <div class="customization-item">
+                            <span class="label">Color Scheme:</span>
+                            <span class="value" id="downloadPreviewColorScheme">Default</span>
+                        </div>
+                        <div class="customization-item">
+                            <span class="label">Font Family:</span>
+                            <span class="value" id="downloadPreviewFontFamily">Default</span>
+                        </div>
+                        <div class="customization-item">
+                            <span class="label">Layout Style:</span>
+                            <span class="value" id="downloadPreviewLayoutStyle">Default</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelDownload">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+            <button class="btn btn-primary" id="confirmDownload" disabled>
+                <i class="fas fa-download"></i>
+                <span class="btn-text">Download</span>
+            </button>
+        </div>
+    </div>
+</div>
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="dashboard.html">My Resumes</a></li>
+                        <li><a href="templates.html">Templates</a></li>
+                        <li><a href="profile.html">Profile</a></li>
+                        <li><a href="#">Settings</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Help</h3>
+                    <ul>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Contact Support</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Follow us</h3>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Logout Modal -->
+    <div class="logout-modal" id="logoutModal">
+        <div class="logout-modal-content">
+            <h3>Logout Confirmation</h3>
+            <p>Are you sure you want to logout from your account?</p>
+            <div class="logout-modal-actions">
+                <button class="cancel-btn">Cancel</button>
+                <button class="logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/navigation-script.js"></script>
+    <script src="../scripts/template-preview-script.js"></script>
+</body>
+</html>

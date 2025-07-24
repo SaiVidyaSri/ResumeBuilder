@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextHire - Templates</title>
+    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/dashboard-styles.css">
+    <link rel="stylesheet" href="../styles/templates-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/jpg" href="../images/logo.jpg">
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar dashboard-nav">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-placeholder">
+                    <img src="../images/logo.jpg" alt="Logo">
+                </div>
+                <span>NEXTHIRE</span>
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html">My resumes</a>
+                <a href="favorites.html">Favourites</a>
+                <a href="templates.html" class="active">Templates</a>
+                <div class="user-profile-nav">
+                    <div class="profile-icon" id="profileIcon">
+                        <img src="../images/profile.jpeg" alt="Profile">
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="profile.html" class="dropdown-item">My profile</a>
+                        <a href="favorites.html" class="dropdown-item">Saved Templates</a>
+                        <a href="profile.html" class="dropdown-item">Account Settings</a>
+                        <a href="logout.html" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            </div>
+            <div class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Templates Content -->
+    <main class="templates-main">
+        <div class="container">
+            <div class="templates-header">
+                <h1>Choose a template</h1>
+                <p>Select from our collection of professional, ATS-friendly resume templates</p>
+            </div>
+            <div class="templates-filters">
+                <div class="search-group" style="position: relative;">
+                    <input type="text" placeholder="Search by template name..." class="search-input" id="templateSearch">
+                    <button class="clear-search-btn" id="clearSearchBtn" style="display: none;" title="Clear search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+            <div class="templates-grid" id="templatesGrid">
+                <!-- Templates will be dynamically loaded here by JavaScript -->
+                <div class="loading-indicator" id="templatesLoadingIndicator" style="text-align: center; padding: 50px; display: none;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2em; color: #007BFF;"></i>
+                    <p>Loading templates...</p>
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- Template Preview Modal -->
+    <div class="template-modal" id="templatePreviewModal">
+        <div class="template-modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="template-modal-header">
+                <h2 id="previewModalTitle">Template Preview</h2>
+            </div>
+            <div class="template-modal-body">
+                <div class="template-preview-image">
+                    <img src="" alt="Template Preview" id="previewImage">
+                </div>
+                <div class="template-preview-info">
+                    <h3 id="previewTitle"></h3>
+                    <p class="preview-description" id="previewDescription"></p>
+                    <div class="preview-features">
+                        <h4>Features:</h4>
+                        <ul id="previewFeaturesList">
+                            <!-- Features will be dynamically loaded here -->
+                        </ul>
+                    </div>
+                    <div class="preview-actions">
+                        <a class="primary-btn use-template-modal-btn" id="useTemplateModalBtn" href="#">Use This Template</a>
+                        <button class="secondary-btn add-to-favorites-btn" id="addToFavoritesModalBtn">
+                            <i class="far fa-heart"></i> Add to Favorites
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="dashboard.html">My Resumes</a></li>
+                        <li><a href="templates.html">Templates</a></li>
+                        <li><a href="profile.html">Profile</a></li>
+                        <li><a href="profile.html">Settings</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Help</h3>
+                    <ul>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Contact Support</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Follow us</h3>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../scripts/dashboard-script.js"></script>
+    <script src="../scripts/templates-script.js"></script>
+</body>
+</html>

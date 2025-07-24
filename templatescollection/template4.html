@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAI VIDYA SRI DONTHAGANI - Resume</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Calibri', sans-serif; font-size: 11pt; line-height: 1.4; color: #333; background: white; max-width: 8.5in; margin: 0 auto; padding: 0.6in; }
+        .header { text-align: center; margin-bottom: 20pt; }
+        .name { font-size: 20pt; font-weight: bold; margin-bottom: 5pt; color: #1a365d; }
+        .title { font-size: 12pt; margin-bottom: 8pt; color: #666; }
+        .contact-info { font-size: 10pt; color: #666; }
+        .section { margin-bottom: 15pt; }
+        .section-title { font-size: 12pt; font-weight: bold; color: #1a365d; margin-bottom: 8pt; text-transform: uppercase; border-bottom: 2pt solid #1a365d; padding-bottom: 2pt; }
+        .experience-item { margin-bottom: 12pt; }
+        .job-title { font-weight: bold; font-size: 11pt; color: #1a365d; }
+        .company { font-style: italic; margin-top: 1pt; }
+        .date { font-size: 10pt; color: #666; margin-top: 1pt; }
+        .job-description ul { margin-left: 15pt; margin-top: 3pt; }
+        .job-description li { margin-bottom: 2pt; }
+        .skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10pt; }
+        .skill-category { background: #f8f9fa; padding: 8pt; border-left: 3pt solid #1a365d; }
+        .skill-category h4 { font-weight: bold; color: #1a365d; margin-bottom: 3pt; }
+        .education-item { background: #f8f9fa; padding: 10pt; border-left: 3pt solid #1a365d; }
+        .degree { font-weight: bold; color: #1a365d; }
+        .school { font-style: italic; margin-top: 1pt; }
+        .education-details { font-size: 10pt; color: #666; margin-top: 1pt; }
+        .project-item { margin-bottom: 8pt; }
+        .project-title { font-weight: bold; color: #1a365d; margin-bottom: 2pt; }
+        .project-description { font-size: 10pt; margin-bottom: 2pt; }
+        .tech-stack { font-size: 9pt; color: #666; font-style: italic; }
+        .cert-item { margin-bottom: 3pt; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div id="name" class="name">SAI VIDYA SRI DONTHAGANI</div>
+        <div id="title" class="title">Software Developer</div>
+        <div class="contact-info">
+            <span id="email">vidyadonthagani@gmail.com</span> • 
+            <span id="phone">9347502589</span> • 
+            <span id="location">Tenali, Andhra Pradesh</span> • 
+            <span id="linkedin">linkedin.com/in/saividyasri</span>
+        </div>
+    </div>
+
+    <div id="summary-section" class="section">
+        <div class="section-title">Professional Summary</div>
+        <p id="summary">Dedicated Software Developer with 2+ years of experience in full-stack web development. Proficient in Java, JavaScript, React.js, and Node.js. Proven track record of developing scalable web applications and optimizing system performance.</p>
+    </div>
+
+    <div id="experience-section" class="section">
+        <div class="section-title">Professional Experience</div>
+        <div id="experience-container">
+            <!-- Experience items will be dynamically inserted here -->
+            <div class="experience-item">
+                <div class="job-title">Software Developer</div>
+                <div class="company">Tech Solutions Pvt Ltd</div>
+                <div class="date">January 2023 – Present</div>
+                <div class="job-description">
+                    <ul>
+                        <li>Developed responsive web applications using React.js and modern JavaScript</li>
+                        <li>Implemented RESTful APIs using Node.js and Express.js</li>
+                        <li>Optimized application performance by 40%</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="experience-item">
+                <div class="job-title">Junior Developer</div>
+                <div class="company">Digital Innovations Ltd</div>
+                <div class="date">June 2022 – December 2022</div>
+                <div class="job-description">
+                    <ul>
+                        <li>Assisted in web application development</li>
+                        <li>Performed testing and debugging</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="education-section" class="section">
+        <div class="section-title">Education</div>
+        <div id="education-container">
+            <!-- Education items will be dynamically inserted here -->
+            <div class="education-item">
+                <div class="degree">Bachelor of Technology in Computer Science Engineering</div>
+                <div class="school">Andhra University</div>
+                <div class="education-details">2018 - 2022 | CGPA: 8.2/10</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="skills-section" class="section">
+        <div class="section-title">Technical Skills</div>
+        <div id="skills-container" class="skills-grid">
+            <!-- Skill categories will be dynamically inserted here -->
+            <div class="skill-category">
+                <h4>Programming</h4>
+                <p>Java, JavaScript, Python, C++</p>
+            </div>
+            <div class="skill-category">
+                <h4>Web Technologies</h4>
+                <p>React.js, Node.js, HTML5, CSS3</p>
+            </div>
+            <div class="skill-category">
+                <h4>Database & Tools</h4>
+                <p>MySQL, MongoDB, Git, Docker, AWS</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="projects-section" class="section">
+        <div class="section-title">Key Projects</div>
+        <div id="projects-container">
+            <!-- Project items will be dynamically inserted here -->
+            <div class="project-item">
+                <div class="project-title">E-commerce Web Application</div>
+                <div class="project-description">Comprehensive platform with authentication, catalog, and payment integration.</div>
+                <div class="tech-stack">React.js, Node.js, MongoDB, Stripe API</div>
+            </div>
+            <div class="project-item">
+                <div class="project-title">Task Management System</div>
+                <div class="project-description">Collaborative tool with real-time updates and team collaboration.</div>
+                <div class="tech-stack">Vue.js, Express.js, Socket.io, MySQL</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="certifications-section" class="section">
+        <div class="section-title">Certifications</div>
+        <div id="certifications-container">
+            <!-- Certifications will be dynamically inserted here -->
+            <div class="cert-item">Oracle Certified Java Programmer (2023)</div>
+            <div class="cert-item">AWS Cloud Practitioner (2022)</div>
+            <div class="cert-item">Google Analytics Certified (2022)</div>
+        </div>
+    </div>
+</body>
+</html>

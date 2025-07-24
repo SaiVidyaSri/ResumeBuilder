@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextHire - Resume Builder</title>
+    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/dashboard-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/jpg" href="../images/logo.jpg">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                
+                    <img src="../images/logo.jpg" alt = "logo">
+               
+                <span>NEXTHIRE</span>
+            </div>
+            <div class="nav-links">
+                <a href="#home" class="active">Home</a>
+                <a href="#about">About us</a>
+                <a href="#services">Services</a>
+                <a href="#faqs">FAQS</a>
+                <a href="#reviews">Reviews</a>
+                <a href="#contact">Contact Us</a>
+                <button class="signup-btn">Sign up <i class="fas fa-arrow-right"></i></button>
+            </div>
+            <div class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>PREPARE YOUR<br>PROFESSIONAL<br>RESUME</h1>
+                <button class="get-started-btn">Get Started</button>
+            </div>
+            <div class="hero-image">
+                  
+                    <img src = "../images/resumehp.png" alt = "resume illustration"> 
+              
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2>About NEXTHIRE</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <h3>🌟 What Makes NextHire Stand Out?</h3>
+                    <p>At Next Hire, we're not just building resumes — we're building careers. Our intelligent, user-friendly platform empowers job seekers to craft professional, eye-catching resumes in minutes. Whether you're a fresher, a mid-level professional, or a seasoned expert, Next Hire adapts to your journey.</p>
+                </div>
+                <div class="about-image">
+                    <div class="circle-gradient"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <h2>NEXTHIRE SERVICES</h2>
+            <div class="services-slider">
+                <button class="slider-arrow prev"><i class="fas fa-chevron-left"></i></button>
+                <div class="services-container">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <!-- <div class="service-img-placeholder"></div> -->
+                            <img src="../images/dataentry.jpeg" alt="Data Entry" class="service-img">
+
+                        </div>
+                        <h3>One-Time Data Entry</h3>
+                        <p>Fill in your resume details once and use them across multiple templates — no need to retype every time.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-image">
+                            <!-- <div class="service-img-placeholder"></div> -->
+                             <img src="../images/resumetemplates.jpeg" alt="Template" class="service-img">
+                        </div>
+                        <h3>Professional Resume Templates</h3>
+                        <p>Choose from modern, ATS-friendly templates tailored to your industry.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-image">
+                            <!-- <div class="service-img-placeholder"></div> -->
+                             <img src="../images/resumepreview.webp" alt="Preview" class="service-img">
+                        </div>
+                        <h3>Real-Time Preview</h3>
+                        <p>Instantly see how your resume looks as you enter your information — what you see is what you get.</p>
+                    </div>
+                                    <!-- Quick Download -->
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="../images/resumedownload.webp" alt="Quick Download" class="service-img">
+                        </div>
+                        <h3>Quick Download</h3>
+                        <p>Download your professionally designed resume instantly in PDF format without any delays or complex steps.</p>
+                    </div>
+
+                    <!-- Edit Anytime -->
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="../images/editresume.webp" alt="Edit Resume" class="service-img">
+                        </div>
+                        <h3>Edit Anytime</h3>
+                        <p>Update or revise your resume whenever you want. All changes are saved in real-time, making updates seamless.</p>
+                    </div>
+
+                    <!-- Resume Sharing -->
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="../images/resumeshare.png" alt="Share Resume" class="service-img">
+                        </div>
+                        <h3>Share Your Resume</h3>
+                        <p>Share your resume via email or direct link instantly. Perfect for quick job applications and referrals.</p>
+                    </div>
+
+                    <!-- Multiple Templates -->
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="../images/multipletemplates.webp" alt="Templates" class="service-img">
+                        </div>
+                        <h3>Multiple Templates</h3>
+                        <p>Choose from a wide variety of professionally designed templates that suit every industry and style.</p>
+                    </div>
+
+                    <!-- Resume Analytics -->
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="../images/analytics.jpg" alt="Analytics" class="service-img">
+                        </div>
+                        <h3>Resume Analytics</h3>
+                        <p>Track how many times your resume was viewed or downloaded. Get feedback and insights on performance.</p>
+                    </div>
+                </div>
+                <button class="slider-arrow next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQs Section -->
+    <section id="faqs" class="faqs">
+        <div class="container">
+            <h2>FAQs</h2>
+            <div class="faqs-slider">
+                <button class="slider-arrow prev"><i class="fas fa-chevron-left"></i></button>
+                <div class="faqs-container">
+                    <div class="faq-card">
+                        <h3>What is Next Hire?</h3>
+                        <p>Next Hire is a smart, easy-to-use resume builder designed to help individuals create professional and tailored resumes in minutes using industry-approved templates.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h3>Do I need to pay to create a resume?</h3>
+                        <p>You can create and preview your resume for free. Some premium templates or features may require a small fee or subscription.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h3>How do I start building my resume?</h3>
+                        <p>Click on "Create Resume", then follow the guided steps to enter your personal, educational, and professional details. Once done, choose a template and download your resume instantly.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h3>Can I download my resume as a PDF?</h3>
+                        <p>Yes! Once you complete your resume, you can instantly download it as a high-quality, ATS-friendly PDF file.</p>
+                    </div>
+
+                    <div class="faq-card">
+                    <h3>Is this resume builder really free?</h3>
+                    <p>Yes, our basic resume builder is completely free to use. Premium templates and features are optional.</p>
+                    </div>
+
+                    <div class="faq-card">
+                    <h3>Can I edit my resume after saving it?</h3>
+                    <p>Absolutely! You can return anytime to update, revise, or improve your resume using our editor.</p>
+                    </div>
+
+                    <div class="faq-card">
+                    <h3>Are the templates ATS-friendly?</h3>
+                    <p>Yes, all our templates are designed to be Applicant Tracking System (ATS) friendly so your resume gets through automated filters.</p>
+                    </div>
+
+                    <div class="faq-card">
+                    <h3>Do I need to create an account to use this?</h3>
+                    <p>You can explore and build a resume without an account, but saving or downloading requires signing up for free.</p>
+                    </div>
+
+                    <div class="faq-card">
+                    <h3>Can I use the same resume for multiple jobs?</h3>
+                    <p>While you can, we recommend customizing your resume for each job to better match the job description and improve your chances.</p>
+                    </div>
+
+                    <div class="faq-card">
+                    <h3>What makes a good resume?</h3>
+                    <p>A great resume is clear, concise, highlights achievements, uses action verbs, and is tailored to the job you're applying for.</p>
+                    </div>
+
+                    <div class="faq-card">
+                    <h3>Can I add custom sections like Projects or Certifications?</h3>
+                    <p>Yes! You can add extra sections such as Projects, Certifications, Languages, or anything else that strengthens your profile.</p>
+                    </div>
+
+                </div>
+                <button class="slider-arrow next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews Section -->
+    <section id="reviews" class="reviews">
+        <div class="container">
+            <h2>Early Reviews</h2>
+            <div class="reviews-container">
+                <div class="review-card">
+                    <p>Next Hire made resume building unbelievably simple. I had my resume ready in 10 minutes and landed two interviews the same week!</p>
+                    <h4>Rosa Maria Aguado, Beal and Harlow</h4>
+                </div>
+                <div class="review-card">
+                    <p>The step-by-step form was so helpful, especially for someone like me who didn't know where to start. The templates are clean, modern, and professional.</p>
+                    <h4>Aaron Loeb, Tully and Drive</h4>
+                </div>
+                <div class="review-card">
+                    <p>I've tried a few resume tools before, but none felt this intuitive. I love that I can fill out my details once and apply it across multiple templates.</p>
+                    <h4>Saira Kohli, The Piew</h4>
+                </div>
+                <div class="review-card">
+                    <p>This tool saved me hours of formatting and writing. The guidance and examples gave me the confidence to apply for my dream job.</p>
+                    <h4>Pranav Reddy, SoftSync Solutions</h4>
+                </div>
+
+                <div class="review-card">
+                    <p>I'm not tech-savvy, but Next Hire was super easy to use. I could focus on my strengths while it handled the layout professionally.</p>
+                    <h4>Elena Marsh, Creative Pulse</h4>
+                </div>
+
+                <div class="review-card">
+                    <p>The resume I built using Next Hire stood out! I got compliments from recruiters about how clean and structured it looked.</p>
+                    <h4>Deepak Malhotra, SmartBridge Technologies</h4>
+                </div>
+
+                <div class="review-card">
+                    <p>Having everything organized and visually appealing helped me secure an internship within a week. Highly recommended for students!</p>
+                    <h4>Sneha Venkatesh, CodeCrafters Intern</h4>
+                </div>
+
+                <div class="review-card">
+                    <p>Changing templates and updating information was seamless. I used one version for tech roles and another for design gigs.</p>
+                    <h4>Jordan Nguyen, UX Collective</h4>
+                </div>
+
+            </div>
+            <!-- <div class="donut-chart">
+                <svg width="300" height="300" viewBox="0 0 300 300">
+                    <circle cx="150" cy="150" r="100" fill="#8a2be2" opacity="0.7" />
+                    <path d="M150,150 L150,50 A100,100 0 0,1 232,200 Z" fill="#4169e1" opacity="0.7" />
+                </svg>
+            </div> -->
+        </div>
+    </section>
+
+    <!-- Contact Section
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Contact US</h2>
+            <div class="contact-info">
+                <div class="contact-details">
+                    <div class="contact-item">
+                        <h3>PHONE</h3>
+                        <p><a href="tel:(123)456-7890">(123) 456-7890</a></p>
+                    </div>
+                    <div class="contact-item">
+                        <h3>EMAIL</h3>
+                        <p><a href="mailto:nexthire@gmail.com">nexthire@gmail.com</a></p>
+                    </div>
+                    <div class="contact-item">
+                        <h3>SOCIAL</h3>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-facebook-messenger"></i></a>
+                            <a href="#"><i class="fab fa-pinterest"></i></a>
+                            <a href="#"><i class="fab fa-tumblr"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-graph">
+                    <img src="images/contactus.png" alt="Contact image">
+                </div>
+            </div>
+        </div>
+    </section>-->
+
+<!-- Footer -->
+<footer class="footer" id="contact">
+  <!-- Top Footer: Contact Icons and Socials -->
+  <div class="footer-top">
+    <div class="container footer-container">
+      
+      <!-- Contact Section -->
+      <div class="footer-contact">
+        <p><strong>Contact Us:</strong></p>
+        <div class="contact-icons">
+          <a href="tel:(123)456-7890" title="Call us"><i class="fas fa-phone-alt"></i></a>
+          <a href="mailto:nexthire@gmail.com" title="Email us"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+
+      <!-- Social Icons -->
+      <div class="footer-socials">
+        <p><strong>Follow Us:</strong></p>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-facebook-messenger"></i></a>
+          <a href="#"><i class="fab fa-pinterest"></i></a>
+          <a href="#"><i class="fab fa-tumblr"></i></a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Footer: Copyright -->
+  <div class="footer-bottom">
+    <p>© 2025 Next Hire. All rights reserved.</p>
+  </div>
+</footer>
+
+
+
+    <!-- Modal Overlays -->
+    <!-- Sign Up Modal -->
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <div class="modal-image">
+                    <img src="../images/resumesignup.png" alt="Sign Up Modal Image">
+                </div>
+                <div class="modal-form">
+                    <h2>Sign up</h2>
+                    <div class="form-step" id="step1">
+                        <input type="email" placeholder="Email" class="form-input" id="signup-email">
+                        <button class="primary-btn" id="send-otp-btn">Send OTP</button>
+                        <p>Already have an account? <a href="#" class="form-link" id="showSignIn">Sign In</a></p>
+                        <div class="divider">
+                            <span>or</span> 
+                        </div>
+                        <button class="google-btn">
+                            <div class="google-icon"></div>
+                            Sign up with Google
+                        </button>
+                    </div>
+                    <div class="form-step" id="step2" style="display: none;">
+                        <div class="success-message">
+                            <i class="fas fa-check-circle"></i>
+                            <p>OTP Verified successfully</p>
+                        </div>
+                        <input type="password" placeholder="Set a password" class="form-input" id="set-password">
+                        <input type="password" placeholder="Confirm password" class="form-input" id="confirm-password">
+                        <button class="primary-btn" id="final-signup-btn">Sign up</button>                        <div class="divider">
+                            <span>or</span>
+                        </div>
+                        <button class="google-btn">
+                            <div class="google-icon"></div>
+                            Sign up with Google
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    <!-- Sign In Modal -->
+    <div class="modal" id="signinModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <div class="modal-image">
+                    <img src="../images/resumesignup.png" alt="Sign Up Modal Image">
+                </div>
+                <div class="modal-form">
+                    <h2>Sign in</h2>
+                    <input type="email" placeholder="Email" id="signin-email" class="form-input">
+                    <input type="password" placeholder="Password" id="signin-password" class="form-input">
+                    <a href="#" class="forgot-password" id="showForgotPassword">Forgot Password?</a>
+                    <button class="primary-btn" id="signin-btn">Sign In</button>
+                    <p>Don't have an account? <a href="#" class="form-link" id="showSignUp">Sign up</a></p>
+                    <div class="divider">
+                        <span>or</span>
+                    </div>
+                    <button class="google-btn">
+                        <div class="google-icon"></div>
+                        Sign in with Google
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+<div class="modal" id="forgotPasswordModal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div class="modal-body">
+            <div class="modal-image">
+                <img src="../images/resumesignup.png" alt="Sign Up Modal Image">
+            </div>
+            <div class="modal-form">
+                <h2>Forgot Password?</h2>
+                <input type="email" placeholder="Enter Your Email" class="form-input" id="forgot-email">
+                <button class="primary" id="send-reset-link-btn">Send Reset Link</button>
+                <div class="button-group">
+                    <button class="secondary" id="forgot-cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal" id="resetPasswordModal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div class="modal-body">
+            <div class="modal-image">
+                <img src="../images/resumesignup.png" alt="Sign Up Modal Image">
+            </div>
+            <div class="modal-form">
+                <h2>Reset Password</h2>
+                <!-- Add hidden input for the token -->
+                <input type="hidden" id="reset-token">
+                <input type="password" placeholder="New Password" class="form-input" id="new-password">
+                <input type="password" placeholder="Confirm Password" class="form-input" id="confirm-new-password">
+                <button class="primary" id="reset-password-btn">Reset Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- OTP Verification Modal -->
+    <div class="modal" id="otpModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <div class="modal-image">
+                    <img src="../images/resumesignup.png" alt="Sign Up Modal Image">
+                </div>
+                <div class="modal-form">
+                    <h2>Sign up</h2>
+                    <input type="text" id="otp-input" class="form-input" placeholder="Enter OTP">
+                    <button class="primary-btn" id="verify-otp-btn">Verify OTP</button>
+                    <div class="divider">
+                        <span>or</span>
+                    </div>
+                    <button class="google-btn">
+                        <div class="google-icon"></div>
+                        Sign up with Google
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/script.js"></script>
+</body>
+</html>

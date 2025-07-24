@@ -1,0 +1,160 @@
+/* Logout Page Styles */
+.logout-body {
+    background: linear-gradient(90deg, #0f1c3f, #311b4f, #6b247f, #c03bce, #f356ff);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.logout-container {
+    width: 120%;
+    max-width: 500px;
+}
+
+.logout-card {
+    background-color: rgba(26, 26, 46, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.logout-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 0; /* Increased padding */
+    background-color: rgba(0, 0, 0, 0.2);
+    gap: 10px; /* Space between logo and text */
+}
+
+.logout-logo img {
+    width: 60px; /* Fixed width */
+    height: 60px; /* Fixed height */
+    object-fit: contain; /* Ensures logo fits without distortion */
+    border-radius: 6px; /* Matches your placeholder style */
+}
+
+.logout-logo span {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: white; /* Added for better visibility */
+    margin-left: -5px;
+}
+.logout-content {
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.logout-icon {
+    font-size: 4rem;
+    color: #4cd964;
+    margin-bottom: 20px;
+}
+
+.logout-content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    background: white;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logout-content p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.logout-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.logout-footer {
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    text-align: center;
+    margin-top: auto;
+}
+
+.logout-footer p {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: #fff;
+}
+
+/* Responsive Styles */
+@media (max-width: 576px) {
+    .logout-actions {
+        flex-direction: column;
+    }
+    
+    .logout-actions a {
+        width: 100%;
+    }
+    
+    .footer-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background-color: white;
+    margin:0 20px;
+}
+
+.divider span {
+    padding: 0 15px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+}
+.primary-btn{
+    width:40%;
+    height:60px;
+    margin-left: -20px;
+    background: linear-gradient(90deg, #ff00cc, #333399);
+    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+
+}
+.secondary-btn{
+    width:40%;
+    height:60px;
+    background: linear-gradient(90deg, #ff00cc, #333399);
+    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+    
+
+}
