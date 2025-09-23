@@ -7,6 +7,20 @@ document.addEventListener("DOMContentLoaded", function() {
     loadResumeHeadline();
     
     updateProfileCompletion();
+    
+    // Test connectivity and fetch profile
+    const userId = getCurrentUserId();
+    console.log('Testing connectivity and fetching profile for user ID:', userId);
+    
+    // Test server connectivity first
+    testServerConnectivity().then(connected => {
+        console.log('Server connectivity test result:', connected);
+        if (connected) {
+            fetchUserProfile(userId);
+        } else {
+            console.error('Server connectivity failed, cannot fetch profile');
+        }
+    });
 
     
     const profileIcon = document.getElementById("profileIcon");
@@ -118,11 +132,11 @@ document.addEventListener("DOMContentLoaded", function() {
     
     const editProfileBtn = document.querySelector(".edit-profile-btn");
     
-    if (editProfileBtn) {
-        editProfileBtn.addEventListener("click", function() {
-            openProfileModal();
-        });
-    }
+    // if (editProfileBtn) {
+    //     editProfileBtn.addEventListener("click", function() {
+    //         openProfileModal();
+    //     });
+    // }
     
     
     const backBtn = document.querySelector(".back-btn");
@@ -191,6 +205,301 @@ async function makeAPICall(endpoint, method = 'GET', data = null) {
     }
 }
 
+// Test basic connectivity to server
+async function testServerConnectivity() {
+    console.log("=== TESTING SERVER CONNECTIVITY ===");
+    try {
+        // Test basic server response
+        const response = await fetch('/');
+        console.log("Basic server connectivity test:", response.status);
+        
+        // Test API base
+        const apiTest = await fetch('/api/users');
+        console.log("API connectivity test:", apiTest.status);
+        
+        return true;
+    } catch (error) {
+        console.error("Server connectivity failed:", error);
+        return false;
+    }
+}
+
+async function fetchUserProfile(userId) {
+    console.log("=== fetchUserProfile called with userId:", userId);
+    try {
+        console.log("Making fetch request to:", `/api/users/${userId}/profile`);
+        const response = await fetch(`/api/users/${userId}/profile`);
+        console.log("API response received:", response);
+        console.log("API response status:", response.status);
+        console.log("API response ok:", response.ok);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.log("Error response text:", errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Profile data received:", data);
+        
+        updateProfileCardUI(data);
+        populateEditModal(data);
+    } catch (error) {
+        console.error("=== FULL ERROR DETAILS ===");
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+        console.error("Full error object:", error);
+        showNotification(`Failed to load profile data: ${error.message || 'Unknown error'}`, "error");
+    }
+}
+function populateEditModal(profileData) {
+    // Extract data from the new API response structure
+    const user = profileData.user || {};
+    const personalInfo = profileData.personalInfo || {};
+    
+    // Store current file input state to preserve it
+    const fileInput = document.getElementById("editProfilePicture");
+    const hasSelectedFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    console.log("=== POPULATE EDIT MODAL ===");
+    console.log("File input has selected file:", hasSelectedFile);
+    if (hasSelectedFile) {
+        console.log("Preserving selected file:", fileInput.files[0].name);
+    }
+    
+    document.getElementById("editFirstName").value = user.fullName ? user.fullName.split(' ')[0] : "";
+    document.getElementById("editLastName").value = user.fullName ? user.fullName.split(' ').slice(1).join(' ') : "";
+    document.getElementById("editMobileNumber").value = personalInfo.phone || "";
+    document.getElementById("editLocation").value = personalInfo.location || "";
+    document.getElementById("editEmail").value = user.email || "";
+    document.getElementById("editBio").value = personalInfo.bio || "";
+    
+    // Only update the preview if no file is currently selected
+    if (!hasSelectedFile) {
+        const profilePicturePreview = document.getElementById("profilePicturePreview");
+        if (user.avatar) {
+            profilePicturePreview.src = `/uploads/profile_pictures/${user.avatar}`;
+            profilePicturePreview.style.display = "block";
+        } else {
+            profilePicturePreview.src = "/images/default-avatar.png";
+            profilePicturePreview.style.display = "block";
+        }
+    } else {
+        console.log("Skipping preview update to preserve selected file preview");
+    }
+}
+
+    document.getElementById("editProfilePicture").addEventListener("change", function(event) {
+        const [file] = event.target.files;
+        const profilePicturePreview = document.getElementById("profilePicturePreview");
+        if (file) {
+            profilePicturePreview.src = URL.createObjectURL(file);
+            profilePicturePreview.style.display = "block";
+        } else {
+            profilePicturePreview.src = "";
+            profilePicturePreview.style.display = "none";
+        }
+    });
+
+document.getElementById("saveProfileBtn").addEventListener("click", async function() {
+    console.log("=== SAVE BUTTON CLICKED ===");
+    
+    // First, let's check the file input state immediately
+    const fileInput = document.getElementById("editProfilePicture");
+    console.log("File input element found:", !!fileInput);
+    console.log("File input files property:", fileInput ? fileInput.files : "No input found");
+    console.log("File input files length:", fileInput ? fileInput.files.length : "N/A");
+    
+    const userId = getUserIdFromSession();
+    if (!userId) {
+        console.error("User ID not found. Cannot save profile.");
+        showNotification("Please log in to save profile changes", "error");
+        return;
+    }
+
+    const firstName = document.getElementById("editFirstName").value.trim();
+    const lastName = document.getElementById("editLastName").value.trim();
+    const phone = document.getElementById("editMobileNumber").value.trim();
+    const location = document.getElementById("editLocation").value.trim();
+    const email = document.getElementById("editEmail").value.trim();
+    const bio = document.getElementById("editBio").value.trim();
+    
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    // Handle profile picture upload separately if a new file is selected
+    const profilePictureFile = document.getElementById("editProfilePicture").files[0];
+    
+    try {
+        console.log("=== STARTING PROFILE SAVE OPERATION ===");
+        console.log("User ID:", userId);
+        console.log("Profile data to save:", { firstName, lastName, phone, location, email, bio });
+        console.log("=== FILE INPUT DEBUG ===");
+        console.log("File input element:", document.getElementById("editProfilePicture"));
+        console.log("Files array:", document.getElementById("editProfilePicture").files);
+        console.log("Files array length:", document.getElementById("editProfilePicture").files.length);
+        console.log("Profile picture file:", profilePictureFile);
+        console.log("Profile picture file name:", profilePictureFile ? profilePictureFile.name : "No file selected");
+        console.log("Profile picture file size:", profilePictureFile ? profilePictureFile.size : "N/A");
+        
+        // Upload profile picture first if a new one is selected
+        if (profilePictureFile) {
+            console.log("=== UPLOADING AVATAR ===");
+            const avatarFormData = new FormData();
+            avatarFormData.append("avatar", profilePictureFile);
+            
+            console.log("Making avatar upload request to:", `/api/users/${userId}/avatar`);
+            const avatarResponse = await fetch(`/api/users/${userId}/avatar`, {
+                method: "POST",
+                body: avatarFormData,
+            });
+            
+            console.log("Avatar upload response status:", avatarResponse.status);
+            console.log("Avatar upload response ok:", avatarResponse.ok);
+            
+            if (!avatarResponse.ok) {
+                const errorData = await avatarResponse.json();
+                console.error("Avatar upload failed:", errorData);
+                throw new Error(`Failed to upload avatar: ${errorData.error}`);
+            }
+            
+            const avatarResult = await avatarResponse.json();
+            console.log("Avatar upload result:", avatarResult);
+        }
+
+        // Update profile data
+        const profileData = {
+            user: {
+                fullName: fullName,
+                email: email
+            },
+            personalInfo: {
+                phone: phone,
+                location: location,
+                bio: bio
+            }
+        };
+
+        console.log("=== UPDATING PROFILE DATA ===");
+        console.log("Profile data payload:", JSON.stringify(profileData, null, 2));
+        console.log("Making profile update request to:", `/api/users/${userId}/profile`);
+        
+        const response = await fetch(`/api/users/${userId}/profile`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(profileData),
+        });
+
+        console.log("Profile update response status:", response.status);
+        console.log("Profile update response ok:", response.ok);
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Profile update failed:", errorData);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error}`);
+        }
+
+        const result = await response.json();
+        console.log("Profile update result:", result);
+        
+        console.log("=== UPDATING UI WITH RESULT DATA ===");
+        // Update the UI directly with the response data instead of fetching again
+        updateProfileCardUI(result);
+        
+        closeModal();
+        showNotification("Profile updated successfully!", "success");
+        
+    } catch (error) {
+        console.error("Error saving profile:", error);
+        showNotification(`Error saving profile: ${error.message}`, "error");
+    }
+});
+
+
+     const editProfileBtn = document.getElementById("editProfileBtn");
+    const profileEditModal = document.getElementById("profileEditModal"); 
+    const closeBtn = document.getElementById("closeModalBtn"); 
+
+    editProfileBtn.addEventListener("click", () => {
+        console.log("=== EDIT PROFILE BUTTON CLICKED ===");
+        profileEditModal.classList.add("active");
+        
+        // Only fetch profile data if we don't have it yet (form fields are empty)
+        const firstNameField = document.getElementById("editFirstName");
+        if (!firstNameField || !firstNameField.value.trim()) {
+            console.log("Form fields empty, fetching profile data...");
+            const currentUserId = getUserIdFromSession();
+            if (currentUserId) {
+                fetchUserProfile(currentUserId);
+            }
+        } else {
+            console.log("Form already populated, skipping profile fetch to preserve file selection");
+        }
+    });
+    
+    // Test button for debugging
+    const testFetchBtn = document.getElementById("testFetchBtn");
+    if (testFetchBtn) {
+        testFetchBtn.addEventListener("click", () => {
+            console.log("=== MANUAL TEST FETCH TRIGGERED ===");
+            const userId = getCurrentUserId();
+            console.log("Test fetch with user ID:", userId);
+            fetchUserProfile(userId);
+        });
+    }
+
+    closeBtn.addEventListener("click", () => {
+        console.log("=== MODAL CLOSED BY CLOSE BUTTON ===");
+        closeModal();
+    });
+
+    profileEditModal.addEventListener("click", (event) => {
+        if (event.target === profileEditModal) {
+            console.log("=== MODAL CLOSED BY CLICKING OUTSIDE ===");
+            closeModal();
+        }
+    });
+
+    // Add file input change listener for debugging
+    const profilePictureInput = document.getElementById("editProfilePicture");
+    if (profilePictureInput) {
+        profilePictureInput.addEventListener("change", (event) => {
+            console.log("=== FILE INPUT CHANGED ===");
+            console.log("Files selected:", event.target.files.length);
+            if (event.target.files.length > 0) {
+                console.log("Selected file:", event.target.files[0].name);
+                console.log("File size:", event.target.files[0].size);
+                console.log("File type:", event.target.files[0].type);
+            }
+        });
+    }
+
+    function closeModal() {
+        profileEditModal.classList.remove("active");
+        
+        // Clear the file input when modal is closed to reset state
+        const fileInput = document.getElementById("editProfilePicture");
+        if (fileInput) {
+            fileInput.value = "";
+            console.log("File input cleared on modal close");
+        }
+        
+        // Reset preview to current avatar
+        const currentUserId = getUserIdFromSession();
+        if (currentUserId) {
+            // Refresh the form with latest data for next time modal opens
+            setTimeout(() => {
+                fetchUserProfile(currentUserId);
+            }, 100);
+        }
+    }
+
+    function getUserIdFromSession() {
+    // This is a placeholder. Replace with your actual logic to get the logged-in user\'s ID.
+    // For example, from localStorage, a cookie, or a global JS variable set after login.
+    return localStorage.getItem("userId"); // Assuming you store it here after successful login
+}
 // Refactored Data Storage Functions
 async function saveToDatabase(sectionId, data) {
     try {
@@ -319,6 +628,7 @@ async function saveAccomplishmentToDatabase(type, data) {
     }
 }
 
+
 async function loadAccomplishmentsFromDatabase() {
     try {
         const userId = getCurrentUserId();
@@ -407,6 +717,100 @@ async function saveAllData() {
     }
 }
 
+function updateProfileCardUI(profileData) {
+    console.log("=== updateProfileCardUI called with:", profileData);
+
+    const profileAvatarImg = document.getElementById("profileAvatar");
+    const defaultAvatarIcon = document.getElementById("defaultAvatarIcon");
+
+    // Handle new data structure
+    const user = profileData.user || {};
+    const personalInfo = profileData.personalInfo || {};
+    const completion = profileData.completion || {};
+
+    console.log("Extracted data:", { user, personalInfo, completion });
+
+    // Update profile picture
+    if (user.avatar) {
+        const imgSrc = user.avatar.startsWith('/') ? user.avatar : `/uploads/profile_pictures/${user.avatar}`;
+        profileAvatarImg.src = imgSrc;
+        profileAvatarImg.style.display = "block";
+        if (defaultAvatarIcon) defaultAvatarIcon.style.display = "none";
+    } else {
+        profileAvatarImg.src = "/images/default-avatar.png";
+        profileAvatarImg.style.display = "block";
+        if (defaultAvatarIcon) defaultAvatarIcon.style.display = "none";
+    }
+
+    // Update profile information
+    const nameElement = document.getElementById("profileName");
+    const locationElement = document.getElementById("profileLocation");
+    const mobileElement = document.getElementById("profileMobile");
+    const progressElement = document.getElementById("progressPercentage");
+    
+    console.log("DOM elements found:", {
+        nameElement: !!nameElement,
+        locationElement: !!locationElement,
+        mobileElement: !!mobileElement,
+        progressElement: !!progressElement
+    });
+    
+    if (nameElement) nameElement.textContent = user.fullName || "Add your name";
+    if (locationElement) locationElement.textContent = personalInfo.location || "Add your location";
+    if (mobileElement) mobileElement.textContent = personalInfo.phone || "Add your mobile number";
+    if (progressElement) progressElement.textContent = `${completion.percentage || 0}%`;
+    
+    // Update email if element exists
+    const emailElement = document.getElementById("profileEmail");
+    if (emailElement) {
+        emailElement.textContent = user.email || "Add your email";
+    }
+
+    // Progress circle
+    const progressCircle = document.getElementById("progressCircle");
+    if (progressCircle) {
+        const radius = progressCircle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - ((completion.percentage || 0) / 100) * circumference;
+        progressCircle.style.strokeDashoffset = offset;
+    }
+    
+    // Update statistics
+    updateStatistics();
+}
+
+/**
+ * Update resume statistics in the profile card
+ */
+async function updateStatistics() {
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+        
+        const response = await fetch(`/api/user-templates/${userId}?limit=100`);
+        if (response.ok) {
+            const data = await response.json();
+            const resumes = data.templates || [];
+            
+            // Calculate statistics
+            const totalResumes = resumes.length;
+            const totalDownloads = resumes.reduce((sum, resume) => sum + (resume.downloads || 0), 0);
+            
+            // Update statistics display
+            const resumeCountElement = document.getElementById('resumeCount');
+            const downloadCountElement = document.getElementById('downloadCount');
+            
+            if (resumeCountElement) resumeCountElement.textContent = totalResumes;
+            if (downloadCountElement) downloadCountElement.textContent = totalDownloads;
+            
+        } else {
+            console.error('Failed to fetch user templates for statistics');
+        }
+    } catch (error) {
+        console.error('Error updating statistics:', error);
+    }
+}
+
 function getProfileData() {
     
     
@@ -416,6 +820,30 @@ function getProfileData() {
         phone: document.querySelector(".contact-item:nth-child(2) span") ? document.querySelector(".contact-item:nth-child(2) span").textContent : "",
         location: document.querySelector(".contact-item:nth-child(3) span") ? document.querySelector(".contact-item:nth-child(3) span").textContent : ""
     };
+}
+
+// Test server connectivity
+async function testServerConnectivity() {
+    try {
+        console.log('Testing server connectivity...');
+        const response = await fetch('/api/test-connection', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            console.log('Server connectivity test: SUCCESS');
+            return true;
+        } else {
+            console.log('Server connectivity test: FAILED - Response not OK');
+            return false;
+        }
+    } catch (error) {
+        console.error('Server connectivity test: FAILED - Error:', error);
+        return false;
+    }
 }
 
 async function loadSavedData() {
@@ -952,52 +1380,52 @@ function openAccomplishmentModal(itemTitle) {
     }
 }
 
-function openProfileModal() {
-    const profileData = getProfileData();
+// function openProfileModal() {
+//     const profileData = getProfileData();
     
-    const modalHTML = `
-        <div class="modal" id="profileModal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <div class="modal-header">
-                    <h2>Edit Profile</h2>
-                </div>
-                <div class="modal-body">
-                    <p class="modal-description">Update your profile information.</p>
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" class="modal-input" id="profileName" value="${profileData.name}">
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" class="modal-input" id="profileEmail" value="${profileData.email}">
-                    </div>
-                    <div class="form-group">
-                        <label>Phone</label>
-                        <input type="tel" class="modal-input" id="profilePhone" value="${profileData.phone}">
-                    </div>
-                    <div class="form-group">
-                        <label>Location</label>
-                        <input type="text" class="modal-input" id="profileLocation" value="${profileData.location}">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="secondary-btn cancel-btn">Cancel</button>
-                    <button class="primary-btn save-btn">Save</button>
-                </div>
-            </div>
-        </div>
-    `;
+//     const modalHTML = `
+//         <div class="modal" id="profileModal">
+//             <div class="modal-content">
+//                 <span class="close-modal">&times;</span>
+//                 <div class="modal-header">
+//                     <h2>Edit Profile</h2>
+//                 </div>
+//                 <div class="modal-body">
+//                     <p class="modal-description">Update your profile information.</p>
+//                     <div class="form-group">
+//                         <label>Full Name</label>
+//                         <input type="text" class="modal-input" id="profileName" value="${profileData.name}">
+//                     </div>
+//                     <div class="form-group">
+//                         <label>Email</label>
+//                         <input type="email" class="modal-input" id="profileEmail" value="${profileData.email}">
+//                     </div>
+//                     <div class="form-group">
+//                         <label>Phone</label>
+//                         <input type="tel" class="modal-input" id="profilePhone" value="${profileData.phone}">
+//                     </div>
+//                     <div class="form-group">
+//                         <label>Location</label>
+//                         <input type="text" class="modal-input" id="profileLocation" value="${profileData.location}">
+//                     </div>
+//                 </div>
+//                 <div class="modal-footer">
+//                     <button class="secondary-btn cancel-btn">Cancel</button>
+//                     <button class="primary-btn save-btn">Save</button>
+//                 </div>
+//             </div>
+//         </div>
+//     `;
     
-    const modalContainer = document.createElement("div");
-    modalContainer.innerHTML = modalHTML;
-    document.body.appendChild(modalContainer.firstElementChild);
+//     const modalContainer = document.createElement("div");
+//     modalContainer.innerHTML = modalHTML;
+//     document.body.appendChild(modalContainer.firstElementChild);
     
-    const modal = document.getElementById("profileModal");
-    modal.style.display = "block";
+//     const modal = document.getElementById("profileModal");
+//     modal.style.display = "block";
     
-    setupModalEventListeners(modal);
-}
+//     setupModalEventListeners(modal);
+// }
 
 
 function initializeApp() {
@@ -1280,7 +1708,17 @@ async function handleModalSave(modal) {
 }
 
 function getCurrentUserId() {
-    return localStorage.getItem('userId') || 'default-user-id'; 
+    let userId = localStorage.getItem('userId');
+    
+    // If no userId is set, automatically set a test user ID
+    if (!userId || userId === 'default-user-id') {
+        const testUserId = "687627950d7da3940afa2751"; // Known working user ID
+        localStorage.setItem('userId', testUserId);
+        console.log('Auto-set test user ID:', testUserId);
+        return testUserId;
+    }
+    
+    return userId; 
 }
 
 async function saveResumeHeadline(headline) {
@@ -2025,4 +2463,20 @@ function showNotification(message) {
         }
     }, 3000);
 }
+
+// Utility function to set a valid user ID for testing
+// Call this in the browser console: setTestUserId()
+function setTestUserId() {
+    const validUserId = "687627950d7da3940afa2751"; // Known working user ID
+    localStorage.setItem("userId", validUserId);
+    console.log("User ID set to:", validUserId);
+    console.log("You can now test the profile functionality!");
+    // Refresh the profile data
+    if (typeof fetchUserProfile === 'function') {
+        fetchUserProfile(validUserId);
+    }
+}
+
+// Make it globally available for testing
+window.setTestUserId = setTestUserId;
 

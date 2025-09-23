@@ -8,6 +8,8 @@ let currentCustomizations = {
     layoutStyle: 'default'
 };
 // CORRECTED Template Preview Script - Fixes Modal Auto-Display Issue
+let isViewingUserResume = false; // Flag to track if we're viewing a user's resume
+
 document.addEventListener("DOMContentLoaded", async function() {
     // Initialize all components
     initProfileDropdown();
@@ -18,12 +20,22 @@ document.addEventListener("DOMContentLoaded", async function() {
     
     // CRITICAL FIX: Initialize action buttons FIRST before loading template data
     initActionButtons();
-    initializeTemplatePreview();
+    
     // Get template ID from URL parameters
     const templateId = getTemplateIdFromURL();
     
     if (templateId) {
         await loadTemplateData(templateId);
+        // Initialize favorite button state after template is loaded
+        await initializeFavoriteButton();
+        
+        // Only initialize template preview if we're not viewing a user's resume
+        if (!isViewingUserResume) {
+            console.log('🔍 CLIENT DEBUG: isViewingUserResume is false, initializing template preview');
+            initializeTemplatePreview();
+        } else {
+            console.log('🔍 CLIENT DEBUG: isViewingUserResume is true, skipping template preview initialization');
+        }
     } else {
         showError("No template ID provided in URL");
     }
@@ -39,13 +51,17 @@ document.addEventListener("DOMContentLoaded", async function() {
 function initActionButtons() {
     console.log('Initializing action buttons...');
     
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const isViewMode = mode === 'view';
+    
     // Download button
     const downloadBtn = document.getElementById('download-btn');
     if (downloadBtn) {
         console.log('Download button found, attaching event listener');
         downloadBtn.addEventListener('click', handleDownload);
     } else {
-        console.error('Download button not found in DOM');
+        console.warn('Download button not found in DOM');
     }
     
     // Save button
@@ -54,7 +70,35 @@ function initActionButtons() {
         console.log('Save button found, attaching event listener');
         saveBtn.addEventListener('click', handleSave);
     } else {
-        console.error('Save button not found in DOM');
+        console.warn('Save button not found in DOM');
+    }
+    
+    // Use Template buttons - these might not exist in view mode
+    const useTemplateBtn = document.getElementById('use-template-btn');
+    const useTemplateBtnBottom = document.getElementById('use-template-btn-bottom');
+    
+    if (useTemplateBtn) {
+        console.log('Use template button found, attaching event listener');
+        useTemplateBtn.addEventListener('click', handleUseTemplate);
+    } else {
+        if (!isViewMode) {
+            console.warn('Use template button not found in DOM');
+        }
+    }
+    
+    if (useTemplateBtnBottom) {
+        console.log('Use template bottom button found, attaching event listener');
+        useTemplateBtnBottom.addEventListener('click', handleUseTemplate);
+    } else {
+        if (!isViewMode) {
+            console.warn('Use template bottom button not found in DOM');
+        }
+    }
+    
+    // Favorite button
+    const favoriteBtn = document.getElementById('favorite-btn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', handleFavorite);
     }
     
     // CRITICAL FIX: Ensure modal is hidden on page load using CSS class
@@ -62,6 +106,9 @@ function initActionButtons() {
     if (saveModal) {
         saveModal.classList.remove('show'); // Remove the show class
         console.log('Save modal found and hidden on page load');
+        
+        // Initialize enhanced modal features
+        initSaveModalFeatures();
     }
     
     // Retry button
@@ -77,6 +124,41 @@ function initActionButtons() {
 }
 
 /**
+ * Initialize enhanced save modal features
+ */
+function initSaveModalFeatures() {
+    const templateDescription = document.getElementById('templateDescription');
+    const charCount = document.getElementById('charCount');
+    
+    if (templateDescription && charCount) {
+        // Character counter functionality
+        function updateCharCount() {
+            const count = templateDescription.value.length;
+            charCount.textContent = count;
+            
+            // Color coding for character count
+            if (count > 180) {
+                charCount.style.color = '#ff6b6b';
+            } else if (count > 150) {
+                charCount.style.color = '#feca57';
+            } else {
+                charCount.style.color = 'rgba(255, 255, 255, 0.6)';
+            }
+        }
+        
+        // Update count on input
+        templateDescription.addEventListener('input', updateCharCount);
+        templateDescription.addEventListener('keyup', updateCharCount);
+        templateDescription.addEventListener('change', updateCharCount);
+        
+        // Initialize count
+        updateCharCount();
+        
+        console.log('Save modal character counter initialized');
+    }
+}
+
+/**
  * Extract template ID from URL parameters
  */
 function getTemplateIdFromURL() {
@@ -84,20 +166,135 @@ function getTemplateIdFromURL() {
     return urlParams.get('templateId');
 }
 
+function getUserIdFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('userId');
+}
+
+function getModeFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('mode');
+}
+
 /**
- * Load template data from backend API
+ * Load template data from backend API - handles both base templates and user resumes
  */
 async function loadTemplateData(templateId) {
     showLoading();
     
+    console.log('🔍 CLIENT DEBUG: loadTemplateData called with templateId:', templateId);
+    console.log('🔍 CLIENT DEBUG: Current URL:', window.location.href);
+    console.log('🔍 CLIENT DEBUG: URL search params:', window.location.search);
+    
     try {
-        const response = await fetch(`/api/templates/${templateId}`);
+        const userId = getUserIdFromURL();
+        const mode = getModeFromURL();
+        
+        console.log('🔍 CLIENT DEBUG: Extracted userId:', userId);
+        console.log('🔍 CLIENT DEBUG: Extracted mode:', mode);
+        
+        let response;
+        let template;
+        
+        // If mode=view, prioritize loading user's resume data
+        if (mode === 'view' && userId) {
+            console.log('View mode detected - loading user resume data');
+            try {
+                response = await fetch(`/api/user-templates/${userId}/${templateId}/populated`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        template = data.template;
+                        isViewingUserResume = true;
+                        
+                        // Populate template information
+                        populateTemplateInfo(template);
+                        
+                        // Load the populated template preview
+                        await loadTemplatePreview(template, data.populatedHTML);
+                        
+                        // Initialize template-specific functionality
+                        initTemplateActions(templateId);
+                        
+                        // Hide elements that don't make sense for user resume viewing
+                        hideUserResumeViewElements();
+                        
+                        hideLoading();
+                        showNotification('Your resume loaded successfully!', 'success');
+                        return;
+                    }
+                }
+            } catch (userTemplateError) {
+                console.log('User template not found in view mode:', userTemplateError);
+                showNotification('Resume not found, showing base template', 'warning');
+            }
+        }
+        
+        // Fallback: try to load user's resume if userId is available (for regular template preview)
+        if (userId) {
+            console.log('🔍 CLIENT DEBUG: Attempting to load user template');
+            console.log('🔍 CLIENT DEBUG: userId =', userId);
+            console.log('🔍 CLIENT DEBUG: templateId =', templateId);
+            
+            try {
+                const apiUrl = `/api/user-templates/${userId}/${templateId}/populated`;
+                console.log('🔍 CLIENT DEBUG: Calling API:', apiUrl);
+                
+                response = await fetch(apiUrl);
+                console.log('🔍 CLIENT DEBUG: Response status:', response.status);
+                console.log('🔍 CLIENT DEBUG: Response ok:', response.ok);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔍 CLIENT DEBUG: Response data success:', data.success);
+                    console.log('🔍 CLIENT DEBUG: User data keys:', Object.keys(data.userData || {}));
+                    console.log('🔍 CLIENT DEBUG: Template data received:');
+                    console.log('  - Template Name:', data.template?.name);
+                    console.log('  - Template Rating:', data.template?.rating);
+                    console.log('  - Template Category:', data.template?.category);
+                    console.log('  - Template ID:', data.template?._id);
+                    
+                    if (data.success) {
+                        template = data.template;
+                        isViewingUserResume = true; // Set this flag IMMEDIATELY when user data is loaded
+                        
+                        console.log('✅ CLIENT DEBUG: Successfully loaded user resume data');
+                        console.log('🔍 CLIENT DEBUG: Set isViewingUserResume to true');
+                        
+                        // Populate template information
+                        populateTemplateInfo(template);
+                        
+                        // Load the populated template preview
+                        await loadTemplatePreview(template, data.populatedHTML);
+                        
+                        // Initialize template-specific functionality
+                        initTemplateActions(templateId);
+                        
+                        // Hide elements that don't make sense for user resume viewing
+                        hideUserResumeViewElements();
+                        
+                        hideLoading();
+                        return;
+                    }
+                }
+            } catch (userTemplateError) {
+                console.error('❌ CLIENT DEBUG: Error loading user template:', userTemplateError);
+                console.log('User template not found, falling back to base template:', userTemplateError);
+            }
+        } else {
+            console.log('🔍 CLIENT DEBUG: No userId provided, loading base template');
+        }
+        
+        // Fallback to base template if user template not found
+        response = await fetch(`/api/templates/${templateId}`);
         
         if (!response.ok) {
             throw new Error(`Failed to fetch template: ${response.status} ${response.statusText}`);
         }
         
-        const template = await response.json();
+        template = await response.json();
         
         // Populate template information
         populateTemplateInfo(template);
@@ -117,9 +314,160 @@ async function loadTemplateData(templateId) {
 }
 
 /**
+ * Load user resume preview - for viewing populated resumes
+ */
+async function loadUserResumePreview(populatedHTML, template) {
+    // Update page title for user resume view
+    document.title = `${template.name} - Resume View - NextHire`;
+    
+    // Update template name
+    const templateNameElement = document.getElementById('template-name');
+    if (templateNameElement) {
+        templateNameElement.textContent = `${template.name} (Your Resume)`;
+    }
+    
+    // Update breadcrumbs for user resume view
+    updateBreadcrumbs(`${template.name} (Resume View)`);
+    
+    // Get the template content container
+    const contentContainer = document.querySelector('.template-preview-content');
+    if (!contentContainer) {
+        throw new Error('Template content container not found');
+    }
+    
+    // Clear any existing content
+    contentContainer.innerHTML = '';
+    
+    // Create iframe for the populated resume
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.height = '100vh';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '8px';
+    iframe.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+    
+    // Set up iframe content
+    iframe.onload = function() {
+        console.log('User resume loaded successfully');
+        
+        // Apply any necessary styling to the iframe content
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        if (iframeDoc) {
+            // Add some basic styling to ensure proper display
+            const style = iframeDoc.createElement('style');
+            style.textContent = `
+                body {
+                    margin: 0;
+                    padding: 20px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                }
+                img {
+                    max-width: 100%;
+                    height: auto;
+                }
+            `;
+            iframeDoc.head.appendChild(style);
+        }
+    };
+    
+    // Add iframe to container
+    contentContainer.appendChild(iframe);
+    
+    // Write the populated HTML to the iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(populatedHTML);
+    iframeDoc.close();
+    
+    // Hide template info section for user resume view (optional)
+    const templateInfoSection = document.querySelector('.template-info');
+    if (templateInfoSection) {
+        templateInfoSection.style.display = 'none';
+    }
+    
+    // Update action buttons for user resume view
+    updateActionButtonsForUserResume();
+}
+
+/**
+ * Update action buttons when viewing user resume
+ */
+function updateActionButtonsForUserResume() {
+    // Hide "Add to Favorites" button since this is a user's own resume
+    const favoriteBtn = document.getElementById('favorite-btn');
+    if (favoriteBtn) {
+        favoriteBtn.style.display = 'none';
+    }
+    
+    // Update button texts to be more appropriate for resume viewing
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+        downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download Resume';
+    }
+    
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Resume';
+        // Optionally change the save button to redirect to resume editor
+        saveBtn.onclick = function() {
+            const templateId = getTemplateIdFromURL();
+            const userId = getUserIdFromURL();
+            window.location.href = `resume-editor.html?templateId=${templateId}&userId=${userId}`;
+        };
+    }
+}
+
+/**
+ * Hide elements that aren't relevant when viewing a user's resume
+ */
+function hideUserResumeViewElements() {
+    // Hide "Use Template" buttons since we're viewing a completed resume
+    const useTemplateBtn = document.getElementById('use-template-btn');
+    if (useTemplateBtn) {
+        useTemplateBtn.style.display = 'none';
+    }
+    
+    const useTemplateBtnBottom = document.getElementById('use-template-btn-bottom');
+    if (useTemplateBtnBottom) {
+        useTemplateBtnBottom.style.display = 'none';
+    }
+    
+    // Hide template customization options since we're viewing a completed resume
+    const customizationPanel = document.querySelector('.customization-panel');
+    if (customizationPanel) {
+        customizationPanel.style.display = 'none';
+    }
+    
+    // Update page title to indicate this is a resume view
+    const templateName = document.getElementById('template-name');
+    if (templateName) {
+        templateName.textContent = templateName.textContent + ' (Your Resume)';
+    }
+    
+    // Update breadcrumbs
+    const breadcrumbContainer = document.querySelector('.breadcrumb');
+    if (breadcrumbContainer) {
+        breadcrumbContainer.innerHTML = `
+            <a href="dashboard.html">Dashboard</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="current">Resume View</span>
+        `;
+    }
+    
+    console.log('User resume view elements hidden/updated');
+}
+
+/**
  * Populate template information in the UI
  */
 function populateTemplateInfo(template) {
+    console.log('🔍 CLIENT DEBUG: populateTemplateInfo called with template:');
+    console.log('  - Template object:', template);
+    console.log('  - Template Name:', template?.name);
+    console.log('  - Template Rating:', template?.rating);
+    console.log('  - Template Category:', template?.category);
+    console.log('  - Template Downloads:', template?.downloads);
+    
     // Update page title
     document.title = `${template.name} - Template Preview - NextHire`;
     
@@ -210,10 +558,10 @@ function updateFeaturesList(features) {
 }
 
 /**
- * Load template preview in iframe
+ * Load template preview in iframe with user data population
  */
-async function loadTemplatePreview(template) {
-    const iframe = document.getElementById("preview-iframe");
+async function loadTemplatePreview(template, populatedHTML = null) {
+    const iframe = document.getElementById("templatePreviewIframe");
     
     if (!iframe) {
         console.error("Preview iframe not found");
@@ -221,23 +569,100 @@ async function loadTemplatePreview(template) {
     }
     
     try {
-        // Use the HTML content from the database
-        let templateHTML = template.htmlContent;
+        // Get userId from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
         
-        if (!templateHTML) {
-            throw new Error("No HTML content found for this template");
+        let templateHTML;
+        
+        // Use provided populated HTML if available, otherwise use template's base HTML
+        if (populatedHTML) {
+            templateHTML = populatedHTML;
+            console.log('Using provided populated HTML for user resume');
+        } else {
+            templateHTML = template.htmlContent;
+            
+            if (!templateHTML) {
+                throw new Error("No HTML content found for this template");
+            }
+            
+            // If we have a userId, try to render template with user data
+            if (userId) {
+                try {
+                    const customizations = getCustomizationSettings();
+                    
+                    const response = await fetch('/api/render-template', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            templateId: template._id,
+                            userId: userId,
+                            customizations: customizations
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            templateHTML = result.data.renderedHtml;
+                            console.log('Template rendered with user data successfully');
+                            
+                            // Store user data for potential use (like in downloads)
+                            currentUserData = result.data.userData;
+                            currentUserId = userId; // Store the user ID globally
+                            currentTemplateId = template._id; // Store the template ID globally
+                            
+                            console.log('Stored user data for downloads:', currentUserData ? 'Available' : 'Not available');
+                        } else {
+                            console.warn('Failed to render with user data:', result.message);
+                            // Fall back to empty template
+                            templateHTML = applyCustomizations(templateHTML);
+                        }
+                    } else {
+                        console.warn('API call failed, using empty template');
+                        templateHTML = applyCustomizations(templateHTML);
+                    }
+                } catch (error) {
+                    console.warn('Error rendering with user data, using empty template:', error);
+                    templateHTML = applyCustomizations(templateHTML);
+                }
+            } else {
+                // No userId, just show empty template with customizations
+                templateHTML = applyCustomizations(templateHTML);
+            }
         }
-        
-        // Apply any customizations
-        templateHTML = applyCustomizations(templateHTML);
         
         // Set the iframe content
         iframe.srcdoc = templateHTML;
         
-        // Wait for iframe to load
+        // Force iframe dimensions immediately
+        iframe.style.width = '100%';
+        iframe.style.height = '800px';
+        iframe.style.minHeight = '800px';
+        iframe.style.border = 'none';
+        iframe.style.display = 'block';
+        
+        // Wait for iframe to load and resize properly
         iframe.onload = function() {
-            // Apply any additional styling or customizations
-            applyIframeCustomizations(iframe);
+            try {
+                console.log('Iframe onload - dimensions:', {
+                    width: iframe.offsetWidth,
+                    height: iframe.offsetHeight,
+                    style: iframe.style.cssText
+                });
+                
+                // Apply any additional styling or customizations
+                applyIframeCustomizations(iframe);
+                
+                // Ensure iframe shows full content
+                resizeIframeToContent(iframe);
+                
+                console.log('Template preview loaded and resized successfully');
+            } catch (error) {
+                console.error('Error in iframe onload:', error);
+            }
         };
         
     } catch (error) {
@@ -305,6 +730,72 @@ function getCustomizationSettings() {
 }
 
 /**
+ * Resize iframe to fit content properly
+ */
+function resizeIframeToContent(iframe) {
+    try {
+        // Force initial dimensions
+        iframe.style.width = '100%';
+        iframe.style.height = '1200px'; // Increased initial height
+        iframe.style.minHeight = '1200px'; // Increased minimum height
+        iframe.style.maxHeight = 'none';
+        iframe.style.border = 'none';
+        iframe.style.display = 'block';
+        iframe.style.overflow = 'visible';
+        
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!iframeDoc) return;
+        
+        // Wait for images and content to load
+        setTimeout(() => {
+            try {
+                // Get the full height of the content
+                const body = iframeDoc.body;
+                const html = iframeDoc.documentElement;
+                
+                if (body && html) {
+                    const contentHeight = Math.max(
+                        body.scrollHeight,
+                        body.offsetHeight,
+                        html.clientHeight,
+                        html.scrollHeight,
+                        html.offsetHeight
+                    );
+                    
+                    // Set minimum height but allow content to expand
+                    const minHeight = 1200; // Increased minimum height
+                    const finalHeight = Math.max(contentHeight + 80, minHeight); // More padding
+                    
+                    iframe.style.height = finalHeight + 'px';
+                    iframe.style.minHeight = finalHeight + 'px';
+                    
+                    console.log('Iframe resized to content height:', finalHeight);
+                    
+                    // Ensure iframe container adapts
+                    const container = iframe.closest('.preview-frame-container');
+                    if (container) {
+                        container.style.minHeight = finalHeight + 'px';
+                        container.style.height = 'auto';
+                    }
+                    
+                    // Also update the template-preview-frame
+                    const frame = iframe.closest('.template-preview-frame');
+                    if (frame) {
+                        frame.style.minHeight = finalHeight + 'px';
+                        frame.style.height = 'auto';
+                    }
+                }
+            } catch (error) {
+                console.error('Error calculating iframe content height:', error);
+            }
+        }, 500); // Wait for content to fully render
+        
+    } catch (error) {
+        console.error('Error resizing iframe:', error);
+    }
+}
+
+/**
  * Apply customizations to iframe content
  */
 function applyIframeCustomizations(iframe) {
@@ -312,14 +803,62 @@ function applyIframeCustomizations(iframe) {
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         if (!iframeDoc) return;
         
-        // Add any additional styling or scripts to the iframe content
+        // Add comprehensive styling for full-page display
         const style = iframeDoc.createElement('style');
         style.textContent = `
-            /* Additional iframe styling */
-            body {
-                margin: 0;
-                padding: 20px;
+            /* Full page iframe styling */
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 100% !important;
                 box-sizing: border-box;
+                font-family: Arial, sans-serif;
+                background: white;
+                overflow-x: hidden;
+                zoom: 1;
+                transform: scale(1);
+            }
+            
+            body {
+                padding: 20px !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+                line-height: 1.6;
+                position: relative;
+            }
+            
+            /* Ensure images are responsive and display properly */
+            img {
+                max-width: 100% !important;
+                height: auto;
+                display: block;
+                margin: 10px 0;
+            }
+            
+            /* Profile picture styling - more specific selectors */
+            .profile-photo img, .profile-picture, .avatar, 
+            .profile-photo .placeholder,
+            [class*="profile-photo"], [class*="profile-pic"], 
+            [class*="avatar"], img[class*="profile"], img[class*="photo"] {
+                width: 150px;
+                height: 150px;
+                object-fit: cover;
+                border-radius: 50%;
+                margin: 10px auto;
+                display: block;
+            }
+            
+            /* Ensure profile-summary is not affected by profile styling */
+            .profile-summary {
+                width: 100% !important;
+                height: auto !important;
+                border-radius: 5px !important;
+                margin: 0 !important;
+                display: block !important;
+                padding: 15px !important;
+                box-sizing: border-box !important;
             }
             
             /* Color scheme styles */
@@ -335,9 +874,51 @@ function applyIframeCustomizations(iframe) {
                 font-weight: 300;
                 letter-spacing: 0.5px;
             }
+            
+            /* Ensure sections are well-spaced */
+            .section, .resume-section, div[class*="section"] {
+                margin: 20px 0;
+                page-break-inside: avoid;
+            }
+            
+            /* Header styling */
+            h1, h2, h3, h4, h5, h6 {
+                margin: 15px 0 10px 0;
+                color: var(--primary-color, #333);
+            }
+            
+            /* Contact information styling */
+            .contact-info, .personal-info {
+                margin: 10px 0;
+            }
+            
+            /* Skills and experience styling */
+            .skills, .experience, .education {
+                margin: 15px 0;
+            }
+            
+            /* Print-friendly styles */
+            @media print {
+                body {
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                .no-print {
+                    display: none !important;
+                }
+            }
         `;
         
         iframeDoc.head.appendChild(style);
+        
+        // Ensure the iframe scales properly to fit content
+        const metaViewport = iframeDoc.createElement('meta');
+        metaViewport.name = 'viewport';
+        metaViewport.content = 'width=device-width, initial-scale=1.0';
+        iframeDoc.head.appendChild(metaViewport);
+        
+        console.log('Applied full-page iframe customizations');
         
     } catch (error) {
         console.error("Error applying iframe customizations:", error);
@@ -553,6 +1134,16 @@ async function handleConfirmDownload() {
     const format = selectedOption.dataset.format;
     const templateId = getTemplateIdFromURL();
     const confirmBtn = document.getElementById('confirmDownload');
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    
+    console.log('=== DOWNLOAD DEBUG INFO ===');
+    console.log('Template ID:', templateId);
+    console.log('User ID:', userId);
+    console.log('Format:', format);
+    console.log('Current User Data Available:', currentUserData ? 'Yes' : 'No');
+    console.log('Current Template ID:', currentTemplateId);
+    console.log('Current User ID:', currentUserId);
     
     if (!templateId) {
         showNotification('No template selected for download', 'error');
@@ -571,11 +1162,14 @@ async function handleConfirmDownload() {
         
         // Hide modal and show success message
         hideDownloadModal();
-        showNotification(`Template downloaded successfully as ${format.toUpperCase()}!`, 'success');
+        const message = userId ? 
+            `Your personalized resume downloaded successfully as ${format.toUpperCase()}!` :
+            `Template downloaded successfully as ${format.toUpperCase()}!`;
+        showNotification(message, 'success');
         
     } catch (error) {
         console.error('Download error:', error);
-        showNotification(`Failed to download ${format.toUpperCase()} template: ${error.message}`, 'error');
+        showNotification(`Failed to download ${format.toUpperCase()} resume: ${error.message}`, 'error');
     } finally {
         // Restore button state
         if (confirmBtn) {
@@ -589,58 +1183,126 @@ async function handleConfirmDownload() {
  * Perform download based on selected format
  */
 async function performFormatDownload(templateId, format) {
-    // Fetch template data
-    const response = await fetch(`/api/templates/${templateId}`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch template data');
-    }
-    
-    const template = await response.json();
     const customizations = getCustomizationSettings();
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
     
-    // Prepare download request
-    const downloadData = {
-        templateId: templateId,
-        format: format,
-        customizations: customizations,
-        templateData: {
-            name: template.name,
-            htmlContent: applyCustomizations(template.htmlContent)
+    let htmlContentToDownload;
+    let templateName;
+    
+    try {
+        // If we have a userId, render the template with user data
+        if (userId) {
+            console.log('Downloading template with user data...');
+            
+            // Use the render template API to get the populated HTML
+            const renderResponse = await fetch('/api/render-template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    templateId: templateId,
+                    userId: userId,
+                    customizations: customizations
+                })
+            });
+            
+            if (renderResponse.ok) {
+                const renderResult = await renderResponse.json();
+                if (renderResult.success) {
+                    htmlContentToDownload = renderResult.data.renderedHtml;
+                    templateName = renderResult.data.templateName || 'resume';
+                    console.log('Successfully got rendered template with user data');
+                } else {
+                    throw new Error('Failed to render template with user data');
+                }
+            } else {
+                throw new Error('Failed to fetch rendered template');
+            }
+        } else {
+            // Fallback: fetch empty template
+            console.log('No user ID found, downloading empty template...');
+            const response = await fetch(`/api/templates/${templateId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch template data');
+            }
+            
+            const template = await response.json();
+            htmlContentToDownload = applyCustomizations(template.htmlContent);
+            templateName = template.name;
         }
-    };
-    
-    // Send download request to backend
-    const downloadResponse = await fetch('/api/templates/download', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(downloadData)
-    });
-    
-    if (!downloadResponse.ok) {
-        const errorData = await downloadResponse.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to generate ${format.toUpperCase()} file`);
+        
+        // Prepare download request with the populated HTML
+        const downloadData = {
+            templateId: templateId,
+            userId: userId,
+            format: format,
+            customizations: customizations,
+            templateData: {
+                name: templateName,
+                htmlContent: htmlContentToDownload
+            }
+        };
+        
+        // Send download request to backend
+        const downloadResponse = await fetch('/api/templates/download', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(downloadData)
+        });
+        
+        if (!downloadResponse.ok) {
+            const errorData = await downloadResponse.json().catch(() => ({}));
+            throw new Error(errorData.message || `Failed to generate ${format.toUpperCase()} file`);
+        }
+        
+        // Handle file download
+        const blob = await downloadResponse.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Get filename from input field or use default
+        const filenameInput = document.getElementById("downloadFileName") || document.getElementById("file-name") || document.getElementById("filename-input");
+        let fileName = "";
+        
+        if (filenameInput && filenameInput.value.trim()) {
+            // Use user-provided filename, remove any invalid characters
+            fileName = filenameInput.value.trim().replace(/[<>:"/\\|?*]/g, '_');
+        } else {
+            // Fallback logic with template name and user data
+            fileName = templateName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            
+            // If we have user data, try to get user's name for filename
+            if (userId && currentUserData && currentUserData.personalDetails) {
+                const userFirstName = currentUserData.personalDetails.firstName || '';
+                const userLastName = currentUserData.personalDetails.lastName || '';
+                if (userFirstName || userLastName) {
+                    fileName = `${userFirstName}_${userLastName}_resume`.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                }
+            }
+        }
+        
+        const extension = format === 'pdf' ? '.pdf' : '.docx';
+        a.download = fileName + extension;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Update download count
+        await updateDownloadCount(templateId);
+        
+        console.log(`Successfully downloaded ${format.toUpperCase()} with${userId ? ' user data' : ' template data'}`);
+        
+    } catch (error) {
+        console.error('Error in performFormatDownload:', error);
+        throw error;
     }
-    
-    // Handle file download
-    const blob = await downloadResponse.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    
-    // Set appropriate filename and extension
-    const fileName = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_template`;
-    const extension = format === 'pdf' ? '.pdf' : '.docx';
-    a.download = fileName + extension;
-    
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    // Update download count
-    await updateDownloadCount(templateId);
 }
 /**
  * Create downloadable template content
@@ -956,20 +1618,13 @@ async function performTemplateSave(templateName, templateDescription) {
     
     const originalTemplate = await templateResponse.json();
     
-    // Get current customizations
-    const customizations = getCustomizationSettings();
-    
-    // Apply customizations to template content
-    const customizedContent = applyCustomizations(originalTemplate.htmlContent);
-    
-    // Prepare save data
+    // Prepare save data WITHOUT customizations
     const saveData = {
         userId: userId,
         originalTemplateId: templateId,
         name: templateName,
         description: templateDescription,
-        htmlContent: customizedContent,
-        customizations: customizations,
+        htmlContent: originalTemplate.htmlContent, // Use original content without customizations
         originalTemplate: {
             name: originalTemplate.name,
             category: originalTemplate.category,
@@ -1000,6 +1655,139 @@ async function performTemplateSave(templateName, templateDescription) {
  */
 function getCurrentUserId() {
     return localStorage.getItem('userId') || sessionStorage.getItem('userId');
+}
+
+/**
+ * Handle Use Template button click
+ */
+async function handleUseTemplate() {
+    console.log('Use Template button clicked');
+    
+    const userId = getCurrentUserId();
+    if (!userId) {
+        showNotification('Please log in to use templates', 'error');
+        // Redirect to login
+        window.location.href = '/#loginModal';
+        return;
+    }
+    
+    const templateId = getTemplateIdFromURL();
+    if (!templateId) {
+        showNotification('No template selected', 'error');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        showNotification('Loading your personalized resume...', 'info');
+        
+        // Redirect to resume editor with this template and user data
+        window.location.href = `resume-editor.html?templateId=${templateId}&userId=${userId}`;
+        
+    } catch (error) {
+        console.error('Error using template:', error);
+        showNotification('Failed to load template. Please try again.', 'error');
+    }
+}
+
+/**
+ * Handle Favorite button click
+ */
+async function handleFavorite() {
+    console.log('Favorite button clicked');
+    
+    const userId = getCurrentUserId();
+    if (!userId) {
+        showNotification('Please log in to add favorites', 'error');
+        return;
+    }
+    
+    const templateId = getTemplateIdFromURL();
+    if (!templateId) {
+        showNotification('No template selected', 'error');
+        return;
+    }
+    
+    const favoriteBtn = document.getElementById('favorite-btn');
+    if (!favoriteBtn) return;
+    
+    try {
+        // Check current favorite status
+        const checkResponse = await fetch(`/api/favorites/check/${userId}/${templateId}`);
+        const checkResult = await checkResponse.json();
+        
+        if (checkResult.isFavorite) {
+            // Remove from favorites
+            const response = await fetch('/api/favorites', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    templateId: templateId
+                })
+            });
+            
+            if (response.ok) {
+                favoriteBtn.innerHTML = '<i class="far fa-heart"></i> Add to Favorites';
+                favoriteBtn.classList.remove('favorited');
+                showNotification('Removed from favorites', 'success');
+            } else {
+                throw new Error('Failed to remove from favorites');
+            }
+        } else {
+            // Add to favorites
+            const response = await fetch('/api/favorites', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    templateId: templateId
+                })
+            });
+            
+            if (response.ok) {
+                favoriteBtn.innerHTML = '<i class="fas fa-heart"></i> Remove from Favorites';
+                favoriteBtn.classList.add('favorited');
+                showNotification('Added to favorites', 'success');
+            } else {
+                throw new Error('Failed to add to favorites');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+        showNotification('Failed to update favorites. Please try again.', 'error');
+    }
+}
+
+/**
+ * Initialize favorite button state
+ */
+async function initializeFavoriteButton() {
+    const userId = getCurrentUserId();
+    const templateId = getTemplateIdFromURL();
+    const favoriteBtn = document.getElementById('favorite-btn');
+    
+    if (!userId || !templateId || !favoriteBtn) return;
+    
+    try {
+        const response = await fetch(`/api/favorites/check/${userId}/${templateId}`);
+        const result = await response.json();
+        
+        if (result.isFavorite) {
+            favoriteBtn.innerHTML = '<i class="fas fa-heart"></i> Remove from Favorites';
+            favoriteBtn.classList.add('favorited');
+        } else {
+            favoriteBtn.innerHTML = '<i class="far fa-heart"></i> Add to Favorites';
+            favoriteBtn.classList.remove('favorited');
+        }
+    } catch (error) {
+        console.error('Error checking favorite status:', error);
+    }
 }
 
 /**
@@ -1154,18 +1942,24 @@ function updateElement(elementId, content) {
 
 // Keep existing functions that are still needed
 function initProfileDropdown() {
+    console.log('Template preview: Initializing profile dropdown...');
     const profileIcon = document.getElementById('profileIcon');
     const profileDropdown = document.getElementById('profileDropdown');
+    
+    console.log('Template preview: Profile elements found:', profileIcon, profileDropdown);
 
     if (profileIcon && profileDropdown) {
         profileIcon.addEventListener('click', function(e) {
             e.stopPropagation();
             profileDropdown.classList.toggle('show');
+            console.log('Template preview: Dropdown toggled, show class:', profileDropdown.classList.contains('show'));
         });
 
         document.addEventListener('click', function() {
             profileDropdown.classList.remove('show');
         });
+    } else {
+        console.error('Template preview: Profile elements not found!');
     }
 }
 
@@ -1302,19 +2096,20 @@ function initCustomizationOptions() {
     const fontFamily = document.getElementById("font-family");
     const layoutStyle = document.getElementById("layout-style");
     
-    // Load saved customizations
-    const savedOptions = JSON.parse(localStorage.getItem("templateCustomization")) || {};
+    // Note: No longer loading saved customizations from localStorage
+    // All customizations are temporary for preview only
     
-    if (colorScheme && savedOptions.colorScheme) {
-        colorScheme.value = savedOptions.colorScheme;
+    // Set default values
+    if (colorScheme) {
+        colorScheme.value = "default";
     }
     
-    if (fontFamily && savedOptions.fontFamily) {
-        fontFamily.value = savedOptions.fontFamily;
+    if (fontFamily) {
+        fontFamily.value = "default";
     }
     
-    if (layoutStyle && savedOptions.layoutStyle) {
-        layoutStyle.value = savedOptions.layoutStyle;
+    if (layoutStyle) {
+        layoutStyle.value = "default";
     }
     
     // Add event listeners for real-time preview updates
@@ -1329,8 +2124,8 @@ function initCustomizationOptions() {
 function updatePreviewCustomizations() {
     const customizations = getCustomizationSettings();
     
-    // Save to localStorage
-    localStorage.setItem("templateCustomization", JSON.stringify(customizations));
+    // Note: Customizations are no longer saved to localStorage
+    // They are only applied temporarily for preview purposes
     
     // Reload the preview with new customizations
     const templateId = getTemplateIdFromURL();
@@ -1502,51 +2297,65 @@ if (!document.querySelector('#notification-styles')) {
 }
 
 // Place this function after your global variable declarations or existing utility functions
-async function initializeTemplatePreview() {
-    try {
-        // Get template ID from URL parameters (e.g., template-preview.html?templateId=...) 
-        currentTemplateId = getTemplateIdFromURL();
-        if (!currentTemplateId) {
-            throw new Error('No template ID provided in URL');
+ async function initializeTemplatePreview() {
+        console.log('🔍 CLIENT DEBUG: initializeTemplatePreview called, isViewingUserResume:', isViewingUserResume);
+        
+        // If we're already viewing a user resume, don't run this function
+        if (isViewingUserResume) {
+            console.log('🚫 CLIENT DEBUG: Skipping initializeTemplatePreview because user resume is already loaded');
+            return;
         }
         
-        // Get current user ID (you need to implement getCurrentUserId() based on your auth system)
-        currentUserId = getCurrentUserId();
-        if (!currentUserId) {
-            // If user is not authenticated, you might want to redirect to login or show a message
-            showErrorState('User not authenticated. Please log in to view your resume preview.');
-            return; // Stop execution if no user ID
+        console.log('🔄 CLIENT DEBUG: Proceeding with initializeTemplatePreview');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const templateId = urlParams.get('templateId');
+        const userId = urlParams.get('userId'); 
+
+        if (!templateId || !userId) {
+            console.error("Template ID or User ID not found in URL parameters.");
+            // Display an error message to the user or redirect
+            return;
         }
-        
-        // Show a loading indicator while data is being fetched and processed
-        showLoadingState('Loading your personalized resume preview...');
-        
-        // Fetch user data and template data simultaneously for efficiency
-        const [userData, templateData] = await Promise.all([
-            fetchUserResumeData(currentUserId), // Fetches all resume data for the user
-            fetchTemplateData(currentTemplateId) // Fetches the selected template's details
-        ]);
-        
-        // Store the fetched user data globally for use in customization updates
-        currentUserData = userData;
-        
-        // Populate the template with the fetched user data and current customizations
-        await populateTemplatePreview(templateData, userData, currentCustomizations);
-        
-        // Initialize the customization controls (color, font, layout selectors)
-        initializeCustomizationControls();
-        
-        // Hide the loading indicator once everything is loaded
-        hideLoadingState();
-        
-        console.log('Template preview initialized successfully with user data.');
-        
-    } catch (error) {
-        console.error('Error initializing template preview:', error);
-        // Display a user-friendly error message
-        showErrorState('Failed to load template preview. Please ensure you are logged in and have resume data. ' + error.message);
+
+        try {
+            // Make a POST request to the correct render template endpoint
+            const response = await fetch('/api/render-template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    templateId: templateId,
+                    userId: userId
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                throw new Error(`Failed to load rendered template: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+            }
+
+            const responseData = await response.json();
+            const renderedHtml = responseData.html;
+
+            // Inject the rendered HTML into the iframe
+            const previewIframe = document.getElementById('templatePreviewIframe');
+            if (previewIframe) {
+                // Using srcdoc is generally safer and simpler for injecting full HTML
+                previewIframe.srcdoc = renderedHtml;
+            } else {
+                console.error("Iframe with ID 'templatePreviewIframe' not found.");
+            }
+
+            console.log("Template preview initialized successfully with rendered data.");
+
+        } catch (error) {
+            console.error("Error initializing template preview:", error);
+            // Display user-friendly error message
+            alert("Could not load resume preview. Please try again.");
+        }
     }
-}
 
 // Place this function alongside initializeTemplatePreview
 async function fetchUserResumeData(userId) {
@@ -1600,44 +2409,44 @@ async function fetchTemplateData(templateId) {
 }
 
 // Place this function alongside fetchTemplateData
-async function populateTemplatePreview(templateData, userData, customizations) {
-    try {
-        // Make a POST request to your backend to get the populated HTML
-        const response = await fetch(`/api/templates/${currentTemplateId}/populate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getAuthToken()}` // Include auth token
-            },
-            body: JSON.stringify({
-                userId: currentUserId,
-                customizations: customizations // Send current customization settings
-            })
-        });
+// async function populateTemplatePreview(templateData, userData, customizations) {
+//     try {
+//         // Make a POST request to your backend to get the populated HTML
+//         const response = await fetch(`/api/templates/${currentTemplateId}/populate`, {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'Authorization': `Bearer ${getAuthToken()}` // Include auth token
+//             },
+//             body: JSON.stringify({
+//                 userId: currentUserId,
+//                 customizations: customizations // Send current customization settings
+//             })
+//         });
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to get populated template from backend');
-        }
+//         if (!response.ok) {
+//             const errorData = await response.json();
+//             throw new Error(errorData.message || 'Failed to get populated template from backend');
+//         }
         
-        const result = await response.json();
+//         const result = await response.json();
         
-        // Update the template information displayed on the page (name, description, features)
-        updateTemplateInfoDisplay(templateData, result.data);
+//         // Update the template information displayed on the page (name, description, features)
+//         updateTemplateInfoDisplay(templateData, result.data);
         
-        // Render the received populated HTML into the iframe
-        renderPopulatedTemplate(result.data.populatedHTML);
+//         // Render the received populated HTML into the iframe
+//         renderPopulatedTemplate(result.data.populatedHTML);
         
-        // Update the customization preview section on the page
-        updateCustomizationPreview(customizations);
+//         // Update the customization preview section on the page
+//         updateCustomizationPreview(customizations);
         
-        console.log('Template populated and rendered successfully.');
+//         console.log('Template populated and rendered successfully.');
         
-    } catch (error) {
-        console.error('Error populating template preview:', error);
-        throw error;
-    }
-}
+//     } catch (error) {
+//         console.error('Error populating template preview:', error);
+//         throw error;
+//     }
+// }
 
 // Place this function alongside populateTemplatePreview
 function renderPopulatedTemplate(populatedHTML) {
@@ -1800,7 +2609,7 @@ async function updateTemplatePreview() {
         const templateData = await fetchTemplateData(currentTemplateId);
         
         // Re-populate the template with the globally stored user data and current customizations
-        await populateTemplatePreview(templateData, currentUserData, currentCustomizations);
+        // await populateTemplatePreview(templateData, currentUserData, currentCustomizations);
         
         hideLoadingState();
         

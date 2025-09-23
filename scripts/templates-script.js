@@ -247,7 +247,22 @@ function attachTemplateCardListeners() {
 
     document.querySelectorAll(".use-template-btn").forEach(btn => {
         btn.addEventListener("click", function() {
-            window.location.href = `template-preview.html?templateId=${this.dataset.templateId}`;
+            const userId = getCurrentUserId(); // Get the current user ID
+            const templateId = this.dataset.templateId;
+
+            if (!userId) {
+                showNotification("User not logged in. Please log in to use templates.", "error");
+                // Optionally, redirect to login page
+                // window.location.href = "/login.html"; 
+                return;
+            }
+
+            if (templateId) {
+                window.location.href = `template-preview.html?templateId=${templateId}&userId=${userId}`;
+            } else {
+                console.error("Template ID not found for the button.");
+                showNotification("Error: Template ID missing.", "error");
+            }
         });
     });
 
@@ -274,17 +289,25 @@ function attachTemplateCardListeners() {
 // ==================================================================================
 // INITIALIZATION AND EVENT LISTENERS
 // ==================================================================================
+console.log('Templates script file loaded');
 
 document.addEventListener("DOMContentLoaded", async function() {
+    console.log('Templates script DOM loaded!');
+    
     // Initialize Profile Dropdown
     const profileIcon = document.getElementById('profileIcon');
     const profileDropdown = document.getElementById('profileDropdown');
+    console.log('Profile elements found:', profileIcon, profileDropdown);
+    
     if (profileIcon && profileDropdown) {
         profileIcon.addEventListener('click', (e) => {
             e.stopPropagation();
             profileDropdown.classList.toggle('show');
+            console.log('Profile dropdown toggled, show class:', profileDropdown.classList.contains('show'));
         });
         document.addEventListener('click', () => profileDropdown.classList.remove('show'));
+    } else {
+        console.error('Profile elements not found in templates page!');
     }
 
     // Initialize Mobile Navigation
@@ -358,8 +381,18 @@ async function previewTemplate(templateId) {
             }
         }
 
-        if (useTemplateModalBtn) useTemplateModalBtn.href = `template-preview.html?templateId=${template._id}`;
-
+        if (useTemplateModalBtn) {
+                    const userId = getCurrentUserId(); // Get the current user ID
+                    if (userId) {
+                        useTemplateModalBtn.href = `template-preview.html?templateId=${template._id}&userId=${userId}`;
+                    } else {
+                        // Handle case where userId is not available (e.g., disable button or show message)
+                        useTemplateModalBtn.href = "#"; // Make it non-functional
+                        useTemplateModalBtn.style.pointerEvents = "none"; // Disable clicks
+                        useTemplateModalBtn.textContent = "Login to Use";
+                        console.warn("User ID not available for 'Use This Template' button in modal.");
+                    }
+                }
         // --- Start of changes for Add to Favorites button in modal ---
         if (addToFavoritesModalBtn) {
             const userId = getCurrentUserId(); // Ensure getCurrentUserId is accessible

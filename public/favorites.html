@@ -38,7 +38,7 @@
                             <i class="fas fa-heart"></i> Saved Templates
                         </a>
                         <a href="profile.html" class="dropdown-item">
-                            <i class="fas fa-cog"></i> Account Settings
+                            <i class="fas fa-cog"></i> Privacy and Security
                         </a>
                         <div class="dropdown-divider"></div>
                         <a href="logout.html" class="dropdown-item logout-link">
@@ -58,6 +58,17 @@
     <!-- Main Content -->
     <main class="templates-main">
         <div class="container">
+            <!-- Temporary Test Button -->
+                         <script>
+                function testDropdown() {
+                    const dropdown = document.getElementById('profileDropdown');
+                    console.log('Test button clicked, dropdown element:', dropdown);
+                    if (dropdown) {
+                        dropdown.classList.toggle('show');
+                        console.log('Dropdown has show class:', dropdown.classList.contains('show'));
+                    }
+                }
+            </script>
             <!-- Breadcrumb -->
             <div class="breadcrumb">
                 <!-- Will be populated by JavaScript -->
@@ -110,42 +121,9 @@
     </div>
 </div>
     <!-- Footer -->
-    <footer class="dashboard-footer">
-        <div class="footer-top">
-            <div class="container">
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="dashboard.html">My Resumes</a></li>
-                        <li><a href="templates.html">Templates</a></li>
-                        <li><a href="profile.html">Profile</a></li>
-                        <li><a href="#">Settings</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Help</h3>
-                    <ul>
-                        <li><a href="#">FAQs</a></li>
-                        <li><a href="#">Contact Support</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Follow us</h3>
-                    <div class="social-icons">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
-            </div>
+    <footer class="simple-footer">
+        <div class="container">
+            <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
         </div>
     </footer>
 
@@ -161,7 +139,6 @@
         </div>
     </div>
 
-    <script src="../scripts/navigation-script.js"></script>
     <script src="../scripts/favorites-script.js"></script>
 </body>
 </html>

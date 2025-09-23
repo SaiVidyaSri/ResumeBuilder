@@ -31,7 +31,7 @@
                     <div class="profile-dropdown" id="profileDropdown">
                         <a href="profile.html" class="dropdown-item">My profile</a>
                         <a href="favorites.html" class="dropdown-item">Saved Templates</a>
-                        <a href="profile.html" class="dropdown-item">Account Settings</a>
+                        <a href="profile.html" class="dropdown-item">Privacy and Security</a>
                         <a href="logout.html" class="dropdown-item">Logout</a>
                     </div>
                 </div>
@@ -47,6 +47,18 @@
     <!-- Main Templates Content -->
     <main class="templates-main">
         <div class="container">
+            <!-- Temporary Test Button -->
+            <script>
+                function testDropdown() {
+                    const dropdown = document.getElementById('profileDropdown');
+                    console.log('Test button clicked, dropdown element:', dropdown);
+                    if (dropdown) {
+                        dropdown.classList.toggle('show');
+                        console.log('Dropdown has show class:', dropdown.classList.contains('show'));
+                    }
+                }
+            </script>
+            
             <div class="templates-header">
                 <h1>Choose a template</h1>
                 <p>Select from our collection of professional, ATS-friendly resume templates</p>
@@ -104,42 +116,9 @@
 
 
     <!-- Footer -->
-    <footer class="dashboard-footer">
-        <div class="footer-top">
-            <div class="container">
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="dashboard.html">My Resumes</a></li>
-                        <li><a href="templates.html">Templates</a></li>
-                        <li><a href="profile.html">Profile</a></li>
-                        <li><a href="profile.html">Settings</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Help</h3>
-                    <ul>
-                        <li><a href="#">FAQs</a></li>
-                        <li><a href="#">Contact Support</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Follow us</h3>
-                    <div class="social-icons">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
-            </div>
+    <footer class="simple-footer">
+        <div class="container">
+            <p>&copy; 2025 NEXTHIRE Pvt. Ltd.</p>
         </div>
     </footer>
 

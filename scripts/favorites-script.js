@@ -1,6 +1,8 @@
 // Favorites and Saved Templates JavaScript
+console.log('Favorites script file loaded');
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Favorites script DOM loaded!');
     // Initialize navigation components
     initProfileDropdown();
     initMobileNavigation();

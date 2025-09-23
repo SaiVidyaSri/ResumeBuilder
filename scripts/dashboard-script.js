@@ -5,7 +5,22 @@ document.addEventListener("DOMContentLoaded", function() {
     initializeMobileNavigation();
     initializeResumesSection();
     updateStatistics();
+    
+    // Clear any stored template customizations (no longer needed)
+    clearTemplateCustomizations();
 });
+
+/**
+ * Clear template customization data from localStorage
+ */
+function clearTemplateCustomizations() {
+    try {
+        localStorage.removeItem("templateCustomization");
+        console.log("Cleared template customization data");
+    } catch (error) {
+        console.error("Error clearing template customizations:", error);
+    }
+}
 
 /**
  * Initialize the resumes section with dynamic loading
@@ -146,30 +161,12 @@ function createResumeCardHTML(resume) {
                         <span>${resume.downloads || 0} downloads</span>
                     </div>
                 </div>
-                
-                <div class="resume-customizations">
-                    <span class="customization-tag">${formatCustomizationValue(resume.customizations?.colorScheme)}</span>
-                    <span class="customization-tag">${formatCustomizationValue(resume.customizations?.fontFamily)}</span>
-                    <span class="customization-tag">${formatCustomizationValue(resume.customizations?.layoutStyle)}</span>
-                </div>
             </div>
             
             <div class="resume-actions">
                 <button class="action-btn view-btn" data-action="view" data-resume-id="${resume._id}" title="View Resume">
                     <i class="fas fa-eye"></i>
-                    <span>Edit</span>
-                </button>
-                <button class="action-btn edit-btn" data-action="edit" data-resume-id="${resume._id}" title="Edit Resume">
-                    <i class="fas fa-edit"></i>
-                    <span>Edit</span>
-                </button>
-                <button class="action-btn download-btn" data-action="download" data-resume-id="${resume._id}" title="Download Resume">
-                    <i class="fas fa-download"></i>
-                    <span>Download</span>
-                </button>
-                <button class="action-btn share-btn" data-action="share" data-resume-id="${resume._id}" title="Share Resume">
-                    <i class="fas fa-share-alt"></i>
-                    <span>Share</span>
+                    <span>View</span>
                 </button>
                 <button class="action-btn delete-btn" data-action="delete" data-resume-id="${resume._id}" title="Delete Resume">
                     <i class="fas fa-trash"></i>
@@ -212,15 +209,6 @@ async function handleResumeAction(event) {
             case 'view':
                 await handleViewResume(resumeId, button);
                 break;
-            case 'edit':
-                await handleEditResume(resumeId, button);
-                break;
-            case 'download':
-                await handleDownloadResume(resumeId, button);
-                break;
-            case 'share':
-                await handleShareResume(resumeId, button);
-                break;
             case 'delete':
                 await handleDeleteResume(resumeId, button);
                 break;
@@ -234,30 +222,37 @@ async function handleResumeAction(event) {
 }
 
 /**
- * Handle view resume action
+ * Handle view resume action - Navigate to template preview page
  */
 async function handleViewResume(resumeId, button) {
-    setButtonLoading(button, true);
-    
     try {
-        // Navigate to a preview page for user templates
-        window.location.href = `user-template-preview.html?templateId=${resumeId}`;
-    } finally {
-        setButtonLoading(button, false);
+        const userId = getCurrentUserId();
+        
+        // Navigate to template-preview.html with the template and user ID
+        // The template preview will automatically load user data if available
+        window.location.href = `template-preview.html?templateId=${resumeId}&userId=${userId}`;
+        
+    } catch (error) {
+        console.error('Error navigating to resume view:', error);
+        showNotification('Failed to open resume. Please try again.', 'error');
     }
 }
 
 /**
- * Handle edit resume action
+ * Handle delete resume action
  */
-async function handleEditResume(resumeId, button) {
-    setButtonLoading(button, true);
-    
+async function handleDeleteResume(resumeId, button) {
     try {
-        // Navigate to template editor with the user template
-        window.location.href = `template-editor.html?userTemplateId=${resumeId}`;
-    } finally {
-        setButtonLoading(button, false);
+        // Get resume name for confirmation
+        const resumeCard = button.closest('.resume-card');
+        const resumeName = resumeCard?.querySelector('.resume-title')?.textContent || 'Untitled Resume';
+        
+        // Show delete confirmation modal
+        showDeleteConfirmModal(resumeId, resumeName);
+        
+    } catch (error) {
+        console.error('Error initiating delete:', error);
+        showNotification('Failed to delete resume. Please try again.', 'error');
     }
 }
 
@@ -296,29 +291,6 @@ function getTemplateIdFromURL() {
     // In dashboard context, we'll get the template ID from the currently selected resume
     const selectedResumeCard = document.querySelector('.resume-card[data-selected-for-download="true"]');
     return selectedResumeCard?.dataset.resumeId || null;
-}
-
-/**
- * Get customization settings (dashboard context adaptation)
- */
-function getCustomizationSettings() {
-    // In dashboard context, we'll get customizations from the selected resume card
-    const selectedResumeCard = document.querySelector('.resume-card[data-selected-for-download="true"]');
-    if (selectedResumeCard) {
-        const customizationTags = selectedResumeCard.querySelectorAll('.customization-tag');
-        const customizations = {
-            colorScheme: customizationTags[0]?.textContent || 'Default',
-            fontFamily: customizationTags[1]?.textContent || 'Default',
-            layoutStyle: customizationTags[2]?.textContent || 'Default'
-        };
-        return customizations;
-    }
-    
-    return {
-        colorScheme: 'Default',
-        fontFamily: 'Default',
-        layoutStyle: 'Default'
-    };
 }
 
 /**
@@ -565,7 +537,7 @@ async function handleConfirmDownload() {
 }
 
 /**
- * Perform download based on selected format - Dashboard version
+ * Perform download based on selected format - Dashboard version with user data
  */
 async function performFormatDownload(templateId, format) {
     const userId = getCurrentUserId();
@@ -573,23 +545,28 @@ async function performFormatDownload(templateId, format) {
         throw new Error('Please log in to download templates');
     }
     
-    // Fetch user template data
-    const response = await fetch(`/api/user-templates/${userId}/${templateId}`);
+    // Fetch populated template data with user data
+    const response = await fetch(`/api/user-templates/${userId}/${templateId}/populated`);
     if (!response.ok) {
         throw new Error('Failed to fetch template data');
     }
     
-    const template = await response.json();
+    const data = await response.json();
+    if (!data.success) {
+        throw new Error(data.message || 'Failed to load template data');
+    }
+    
+    const template = data.template;
     const customizations = template.customizations || getCustomizationSettings();
     
-    // Prepare download request
+    // Prepare download request with populated HTML
     const downloadData = {
         templateId: templateId,
         format: format,
         customizations: customizations,
         templateData: {
             name: template.name,
-            htmlContent: template.htmlContent || template.content || '<html><body><h1>Resume Template</h1></body></html>'
+            htmlContent: data.populatedHTML // Use populated HTML with user data
         }
     };
     
@@ -613,8 +590,18 @@ async function performFormatDownload(templateId, format) {
     const a = document.createElement('a');
     a.href = url;
     
-    // Set appropriate filename and extension
-    const fileName = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_resume`;
+    // Get filename from input field or use default
+    const filenameInput = document.getElementById("downloadFileName") || document.getElementById("file-name") || document.getElementById("filename-input");
+    let fileName = "";
+    
+    if (filenameInput && filenameInput.value.trim()) {
+        // Use user-provided filename, remove any invalid characters
+        fileName = filenameInput.value.trim().replace(/[<>:"/\\|?*]/g, '_');
+    } else {
+        // Fallback to template name
+        fileName = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_resume`;
+    }
+    
     const extension = format === 'pdf' ? '.pdf' : '.docx';
     a.download = fileName + extension;
     
@@ -643,40 +630,6 @@ async function performFormatDownload(templateId, format) {
         updateStatistics();
     }, 500);
 }
-/**
- * Handle share resume action
- */
-async function handleShareResume(resumeId, button) {
-    setButtonLoading(button, true);
-    
-    try {
-        // Create a shareable link (you may need to implement a public sharing endpoint)
-        const shareUrl = `${window.location.origin}/shared-resume.html?id=${resumeId}`;
-        
-        // Try to use the Web Share API if available
-        if (navigator.share) {
-            await navigator.share({
-                title: 'Check out my resume',
-                text: 'I created this resume using NextHire',
-                url: shareUrl
-            });
-            showNotification('Resume shared successfully!', 'success');
-        } else {
-            // Fallback to copying to clipboard
-            await navigator.clipboard.writeText(shareUrl);
-            showNotification('Share link copied to clipboard!', 'success');
-        }
-        
-    } catch (error) {
-        if (error.name !== 'AbortError') {
-            console.error('Share error:', error);
-            showNotification('Failed to share resume', 'error');
-        }
-    } finally {
-        setButtonLoading(button, false);
-    }
-}
-
 /**
  * Handle delete resume action
  */
@@ -872,18 +825,6 @@ function isRecentlyUpdated(dateString) {
     return diffHours < 24; // Consider recent if updated within 24 hours
 }
 
-function formatCustomizationValue(value) {
-    if (!value || value === 'default') {
-        return 'Default';
-    }
-    
-    return value
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/[-_]/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase())
-        .trim();
-}
-
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -1077,4 +1018,255 @@ if (!document.querySelector('#notification-styles')) {
         }
     `;
     document.head.appendChild(style);
+}
+
+/**
+ * Populate template with user data
+ */
+function populateTemplateWithData(templateHTML, userData) {
+    if (!userData) return templateHTML;
+    
+    // Replace personal information placeholders
+    if (userData.personalInfo) {
+        templateHTML = templateHTML.replace(/{{personalInfo\.firstName}}/g, userData.personalInfo.firstName || '');
+        templateHTML = templateHTML.replace(/{{personalInfo\.lastName}}/g, userData.personalInfo.lastName || '');
+        templateHTML = templateHTML.replace(/{{personalInfo\.email}}/g, userData.personalInfo.email || '');
+        templateHTML = templateHTML.replace(/{{personalInfo\.phone}}/g, userData.personalInfo.phone || '');
+        templateHTML = templateHTML.replace(/{{personalInfo\.address}}/g, userData.personalInfo.address || '');
+        templateHTML = templateHTML.replace(/{{personalInfo\.city}}/g, userData.personalInfo.city || '');
+        templateHTML = templateHTML.replace(/{{personalInfo\.country}}/g, userData.personalInfo.country || '');
+    }
+    
+    // Replace resume headline
+    if (userData.resumeHeadline) {
+        templateHTML = templateHTML.replace(/{{resumeHeadline\.headline}}/g, userData.resumeHeadline.headline || '');
+    }
+    
+    // Replace career profile
+    if (userData.careerProfile) {
+        templateHTML = templateHTML.replace(/{{careerProfile\.profile}}/g, userData.careerProfile.profile || '');
+    }
+    
+    // Handle arrays (experience, education, skills, etc.)
+    templateHTML = populateArrayData(templateHTML, 'experience', userData.experience);
+    templateHTML = populateArrayData(templateHTML, 'education', userData.education);
+    templateHTML = populateArrayData(templateHTML, 'keySkills', userData.keySkills);
+    templateHTML = populateArrayData(templateHTML, 'itSkills', userData.itSkills);
+    templateHTML = populateArrayData(templateHTML, 'projects', userData.projects);
+    templateHTML = populateArrayData(templateHTML, 'certifications', userData.certifications);
+    
+    return templateHTML;
+}
+
+/**
+ * Populate array data in template
+ */
+function populateArrayData(templateHTML, arrayName, arrayData) {
+    if (!arrayData || !Array.isArray(arrayData)) {
+        // Remove the section if no data
+        const sectionRegex = new RegExp(`{{#each ${arrayName}}}[\\s\\S]*?{{/${arrayName}}}`, 'g');
+        return templateHTML.replace(sectionRegex, '');
+    }
+    
+    const sectionRegex = new RegExp(`{{#each ${arrayName}}}([\\s\\S]*?){{/${arrayName}}}`, 'g');
+    
+    return templateHTML.replace(sectionRegex, (match, template) => {
+        return arrayData.map(item => {
+            let itemHTML = template;
+            Object.keys(item).forEach(key => {
+                const placeholder = new RegExp(`{{${key}}}`, 'g');
+                itemHTML = itemHTML.replace(placeholder, item[key] || '');
+            });
+            return itemHTML;
+        }).join('');
+    });
+}
+
+/**
+ * Show resume view modal
+ */
+function showResumeViewModal(templateHTML, resumeName) {
+    const modal = document.getElementById('resumeViewModal');
+    const contentDiv = document.getElementById('resumeViewContent');
+    
+    if (!modal || !contentDiv) {
+        console.error('View modal elements not found');
+        return;
+    }
+    
+    // Set the resume content
+    contentDiv.innerHTML = templateHTML;
+    
+    // Update modal title
+    const titleElement = modal.querySelector('.modal-header h3');
+    if (titleElement) {
+        titleElement.innerHTML = `<i class="fas fa-eye"></i> ${resumeName}`;
+    }
+    
+    // Show modal
+    modal.classList.add('show');
+    
+    // Setup modal event listeners
+    setupViewModalListeners();
+}
+
+/**
+ * Show share modal
+ */
+/**
+ * Show delete confirmation modal
+ */
+function showDeleteConfirmModal(resumeId, resumeName) {
+    const modal = document.getElementById('deleteConfirmModal');
+    const nameSpan = document.getElementById('deleteResumeName');
+    
+    if (!modal || !nameSpan) {
+        console.error('Delete modal elements not found');
+        return;
+    }
+    
+    // Set the resume name
+    nameSpan.textContent = resumeName;
+    
+    // Show modal
+    modal.classList.add('show');
+    
+    // Setup modal event listeners
+    setupDeleteModalListeners(resumeId);
+}
+
+/**
+ * Setup view modal event listeners
+ */
+function setupViewModalListeners() {
+    const modal = document.getElementById('resumeViewModal');
+    const closeButtons = modal.querySelectorAll('.close-modal, #closeViewModalBtn');
+    
+    // Close modal listeners
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            modal.classList.remove('show');
+        });
+    });
+    
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+}
+
+/**
+ * Setup delete modal event listeners
+ */
+function setupDeleteModalListeners(resumeId) {
+    const modal = document.getElementById('deleteConfirmModal');
+    const closeButtons = modal.querySelectorAll('.close-modal, #cancelDelete');
+    const confirmButton = document.getElementById('confirmDelete');
+    
+    // Close modal listeners
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            modal.classList.remove('show');
+        });
+    });
+    
+    // Confirm delete
+    if (confirmButton) {
+        confirmButton.addEventListener('click', async () => {
+            try {
+                confirmButton.disabled = true;
+                confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                
+                const userId = getCurrentUserId();
+                const response = await fetch(`/api/user-templates/${userId}/${resumeId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showNotification('Resume deleted successfully', 'success');
+                    modal.classList.remove('show');
+                    
+                    // Remove the resume card from UI
+                    const resumeCard = document.querySelector(`[data-resume-id="${resumeId}"]`);
+                    if (resumeCard) {
+                        resumeCard.style.animation = 'slideOutLeft 0.3s ease-out';
+                        setTimeout(() => {
+                            resumeCard.remove();
+                            
+                            // Check if no resumes left
+                            const remainingCards = document.querySelectorAll('.resume-card');
+                            if (remainingCards.length === 0) {
+                                document.getElementById('resumesEmpty').style.display = 'block';
+                            }
+                        }, 300);
+                    }
+                    
+                    // Refresh statistics
+                    loadUserResumes();
+                } else {
+                    throw new Error('Failed to delete resume');
+                }
+            } catch (error) {
+                console.error('Error deleting resume:', error);
+                showNotification('Failed to delete resume', 'error');
+            } finally {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = '<i class="fas fa-trash"></i> Delete Resume';
+            }
+        });
+    }
+    
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+}
+
+/**
+ * Download resume as HTML/PDF
+ */
+function downloadResumeAsHTML(content, resumeName = 'resume') {
+    // Create a complete HTML document with proper styling
+    const completeHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${resumeName}</title>
+            <style>
+                body { 
+                    font-family: Georgia, serif; 
+                    line-height: 1.6; 
+                    margin: 0; 
+                    padding: 20px; 
+                    color: #333;
+                }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            ${content}
+        </body>
+        </html>
+    `;
+    
+    const blob = new Blob([completeHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${resumeName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Resume downloaded successfully!', 'success');
 }

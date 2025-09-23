@@ -28,20 +28,6 @@ const userTemplateSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    customizations: {
-        colorScheme: {
-            type: String,
-            default: 'default'
-        },
-        fontFamily: {
-            type: String,
-            default: 'default'
-        },
-        layoutStyle: {
-            type: String,
-            default: 'default'
-        }
-    },
     originalTemplate: {
         name: {
             type: String,
@@ -59,6 +45,14 @@ const userTemplateSchema = new mongoose.Schema({
     isPublic: {
         type: Boolean,
         default: false
+    },
+    shareId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    sharedAt: {
+        type: Date
     },
     downloads: {
         type: Number,

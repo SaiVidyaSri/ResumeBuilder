@@ -13,12 +13,26 @@ function downloadResume(format) {
         return;
     }
 
-    // Get user's name for the filename
-    const resumeData = loadResumeData();
-    const userName = (resumeData.basics && resumeData.basics.fullName) ? 
-        resumeData.basics.fullName.replace(/\s+/g, '_') : 'resume';
-    const timestamp = new Date().toISOString().slice(0, 10);
-    const fileName = `${userName}_resume_${timestamp}`;
+    // Get filename from input field or use default
+    const filenameInput = document.getElementById("downloadFileName") || document.getElementById("file-name") || document.getElementById("filename-input");
+    let fileName = "";
+    
+    console.log("Download function - filename input element:", filenameInput);
+    console.log("Download function - filename input value:", filenameInput ? filenameInput.value : "NO INPUT FOUND");
+    
+    if (filenameInput && filenameInput.value.trim()) {
+        // Use user-provided filename, remove any invalid characters
+        fileName = filenameInput.value.trim().replace(/[<>:"/\\|?*]/g, '_');
+        console.log("Using user-provided filename:", fileName);
+    } else {
+        // Fallback to user's name if no filename provided
+        const resumeData = loadResumeData();
+        const userName = (resumeData.basics && resumeData.basics.fullName) ? 
+            resumeData.basics.fullName.replace(/\s+/g, '_') : 'resume';
+        const timestamp = new Date().toISOString().slice(0, 10);
+        fileName = `${userName}_resume_${timestamp}`;
+        console.log("Using fallback filename:", fileName);
+    }
 
     // Close the download modal
     document.getElementById("downloadOptionsModal").classList.remove("active");

@@ -39,7 +39,7 @@ class AdminDashboard {
         const profileDropdown = document.getElementById('profileDropdown');
         
         profileIcon.addEventListener('click', () => {
-            profileDropdown.classList.toggle('active');
+            profileDropdown.classList.toggle('show');
         });
 
         // Profile dropdown actions
@@ -56,14 +56,14 @@ class AdminDashboard {
                     this.showSettings();
                 }
                 
-                profileDropdown.classList.remove('active');
+                profileDropdown.classList.remove('show');
             });
         });
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!profileIcon.contains(e.target) && !profileDropdown.contains(e.target)) {
-                profileDropdown.classList.remove('active');
+                profileDropdown.classList.remove('show');
             }
         });
 

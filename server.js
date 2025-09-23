@@ -28,6 +28,7 @@ const Publication = require('./models/Publication');
 const Presentation = require('./models/Presentation');
 const Patent = require('./models/Patent');
 const Certification = require('./models/Certification');
+const ProfileDetails = require('./models/ProfileDetails');
 const Template = require('./models/Template');
 const Favorite = require('./models/Favorite');
 const UserTemplate = require('./models/UserTemplate');
@@ -39,7 +40,7 @@ app.use(cors({
 }));
 
 // MongoDB connection using the provided URI
-mongoose.connect('mongodb+srv://vidyadonthagani:Vidya28@cluster0.wixjktf.mongodb.net/resume?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect('mongodb+srv://vidyadonthagani:Vidya@cluster0.wixjktf.mongodb.net/resume?retryWrites=true&w=majority&appName=Cluster0')
   .then(() => {
     console.log("✅ MongoDB connected to database:", mongoose.connection.db.databaseName);
     
@@ -49,7 +50,8 @@ mongoose.connect('mongodb+srv://vidyadonthagani:Vidya28@cluster0.wixjktf.mongodb
   })
   .catch(err => {
     console.error("❌ MongoDB connection error:", err);
-    process.exit(1);
+    console.log("⚠️ Continuing without database connection for testing...");
+    // Don't exit, continue running for testing purposes
   });
 
 const ADMIN_EMAIL = "hirewithnexthire@gmail.com"; 
@@ -63,7 +65,14 @@ app.use('/styles', express.static(path.join(__dirname, 'styles')));
 app.use('/scripts',express.static(path.join(__dirname, 'scripts')));
 app.use('/images',express.static(path.join(__dirname, 'images')));
 app.use('/templateimages', express.static(path.join(__dirname, 'images', 'templateimages')));
+app.use('/templatescollection', express.static(path.join(__dirname, 'templatescollection')));
 app.use('/api/resume-headline', headlineRoutes);
+
+// Test connection endpoint
+app.get('/api/test-connection', (req, res) => {
+    console.log('Test connection endpoint called');
+    res.json({ success: true, message: 'Server is connected' });
+});
 
 // Static file routes
 app.get('/', (req, res) => {
@@ -2774,6 +2783,295 @@ app.delete("/api/users/:id", async (req, res) => {
     }
 });
 
+// User Profile API Routes (for frontend compatibility)
+app.get("/api/users/:userId/profile", async (req, res) => {
+    console.log("=== GET /api/users/:userId/profile called ===");
+    console.log("User ID:", req.params.userId);
+    console.log("Request headers:", req.headers);
+    
+    try {
+        const { userId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            console.log("Invalid user ID format:", userId);
+            return res.status(400).json({ error: "Invalid user ID format" });
+        }
+
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+        
+        // Get user basic info
+        const user = await User.findById(userIdObj);
+        if (!user) {
+            console.log("User not found:", userId);
+            return res.status(404).json({ error: "User not found" });
+        }
+        
+        // Get profile details
+        const profileDetails = await ProfileDetails.findOne({ userId: userIdObj });
+        console.log("Profile details found:", profileDetails);
+        
+        // Format response for frontend
+        const response = {
+            user: {
+                fullName: profileDetails ? `${profileDetails.firstName || ''} ${profileDetails.lastName || ''}`.trim() : user.fullName || '',
+                email: user.email,
+                username: user.username,
+                avatar: profileDetails?.profilePicture || null
+            },
+            personalInfo: {
+                phone: profileDetails?.mobileNumber || '',
+                location: profileDetails?.location || '',
+                bio: profileDetails?.bio || ''
+            },
+            completion: {
+                percentage: profileDetails?.profileCompletionPercentage || 0
+            }
+        };
+        
+        console.log("Sending response:", response);
+        res.json(response);
+    } catch (error) {
+        console.error("Error in GET /api/users/:userId/profile:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.put("/api/users/:userId/profile", async (req, res) => {
+    console.log("=== PROFILE UPDATE ENDPOINT HIT ===");
+    console.log("User ID:", req.params.userId);
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    
+    try {
+        const { userId } = req.params;
+        const { user, personalInfo } = req.body;
+        
+        console.log("Validating user ID:", userId);
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            console.log("Invalid user ID format");
+            return res.status(400).json({ error: "Invalid user ID format" });
+        }
+
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+        console.log("Converting to ObjectId:", userIdObj);
+        
+        // Update user basic info if provided
+        if (user) {
+            console.log("Updating User collection with:", user);
+            await User.findByIdAndUpdate(userIdObj, {
+                fullName: user.fullName,
+                email: user.email,
+                username: user.username
+            });
+            console.log("User collection updated");
+        }
+        
+        // Update profile details
+        const updateData = {};
+        if (user?.fullName) {
+            const nameParts = user.fullName.split(' ');
+            updateData.firstName = nameParts[0] || '';
+            updateData.lastName = nameParts.slice(1).join(' ') || '';
+        }
+        if (personalInfo?.phone) updateData.mobileNumber = personalInfo.phone;
+        if (personalInfo?.location) updateData.location = personalInfo.location;
+        if (personalInfo?.bio) updateData.bio = personalInfo.bio;
+        
+        console.log("Updating ProfileDetails with:", updateData);
+        const profileDetails = await ProfileDetails.findOneAndUpdate(
+            { userId: userIdObj },
+            updateData,
+            { new: true, upsert: true }
+        );
+        console.log("ProfileDetails update result:", profileDetails);
+        
+        // Return updated profile data
+        console.log("Fetching updated user data...");
+        const updatedUser = await User.findById(userIdObj);
+        const response = {
+            user: {
+                fullName: `${profileDetails.firstName || ''} ${profileDetails.lastName || ''}`.trim(),
+                email: updatedUser.email,
+                username: updatedUser.username,
+                avatar: profileDetails.profilePicture || null
+            },
+            personalInfo: {
+                phone: profileDetails.mobileNumber || '',
+                location: profileDetails.location || '',
+                bio: profileDetails.bio || ''
+            },
+            completion: {
+                percentage: profileDetails.profileCompletionPercentage || 0
+            }
+        };
+        
+        console.log("Sending response:", JSON.stringify(response, null, 2));
+        res.json(response);
+    } catch (error) {
+        console.error("Error saving user profile:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Change password endpoint
+app.put("/api/users/:userId/change-password", async (req, res) => {
+    console.log("=== CHANGE PASSWORD ENDPOINT HIT ===");
+    console.log("User ID:", req.params.userId);
+    
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ 
+                message: "Both current password and new password are required" 
+            });
+        }
+        
+        // Find the user
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        // Verify current password
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isCurrentPasswordValid) {
+            return res.status(400).json({ message: "Current password is incorrect" });
+        }
+        
+        // Validate new password requirements
+        if (newPassword.length < 8) {
+            return res.status(400).json({ 
+                message: "New password must be at least 8 characters long" 
+            });
+        }
+        
+        if (!/[A-Z]/.test(newPassword)) {
+            return res.status(400).json({ 
+                message: "New password must include at least one uppercase letter" 
+            });
+        }
+        
+        if (!/\d/.test(newPassword)) {
+            return res.status(400).json({ 
+                message: "New password must include at least one number" 
+            });
+        }
+        
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)) {
+            return res.status(400).json({ 
+                message: "New password must include at least one special character" 
+            });
+        }
+        
+        // Hash the new password
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        
+        // Update user password
+        await User.findByIdAndUpdate(req.params.userId, { 
+            password: hashedNewPassword 
+        });
+        
+        console.log("Password updated successfully for user:", req.params.userId);
+        res.json({ message: "Password updated successfully" });
+        
+    } catch (error) {
+        console.error("Error changing password:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.post("/api/users/:userId/avatar", upload.single('avatar'), async (req, res) => {
+    console.log("=== AVATAR UPLOAD ENDPOINT HIT ===");
+    console.log("User ID:", req.params.userId);
+    console.log("File uploaded:", req.file ? req.file.filename : "No file");
+    
+    try {
+        const { userId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            console.log("Invalid user ID format:", userId);
+            return res.status(400).json({ error: "Invalid user ID format" });
+        }
+
+        if (!req.file) {
+            console.log("No file was uploaded");
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+        const filename = `${userId}_profile.jpg`;
+        
+        console.log("Updating ProfileDetails with filename:", filename);
+        
+        // Update profile details with new avatar filename
+        const result = await ProfileDetails.findOneAndUpdate(
+            { userId: userIdObj },
+            { profilePicture: filename },
+            { upsert: true, new: true }
+        );
+        
+        console.log("ProfileDetails update result:", result);
+        
+        res.json({ 
+            message: "Avatar updated successfully",
+            avatarUrl: `/uploads/profile_pictures/${filename}`
+        });
+        
+        console.log("Avatar upload completed successfully");
+    } catch (error) {
+        console.error("Error uploading avatar:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Profile Details API Routes
+app.get("/api/profile-details/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ error: "Invalid user ID format" });
+        }
+
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+        const profileDetails = await ProfileDetails.findOne({ userId: userIdObj });
+        
+        if (!profileDetails) {
+            return res.status(404).json({ error: "Profile details not found" });
+        }
+        
+        res.json(profileDetails);
+    } catch (error) {
+        console.error("Error fetching profile details:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put("/api/profile-details/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ error: "Invalid user ID format" });
+        }
+
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+        const updateData = req.body;
+        
+        const profileDetails = await ProfileDetails.findOneAndUpdate(
+            { userId: userIdObj },
+            updateData,
+            { new: true, upsert: true }
+        );
+        
+        res.json(profileDetails);
+    } catch (error) {
+        console.error("Error saving profile details:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // Template Routes
 app.post("/api/templates", upload.fields([{ name: "previewImage", maxCount: 1 }, { name: "htmlFile", maxCount: 1 }]), async (req, res) => {
@@ -2847,47 +3145,78 @@ app.get("/api/templates/:id", async (req, res) => {
         if (!template) {
             return res.status(404).json({ error: "Template not found" });
         }
+        
+        console.log(`Template requested: ${template.name} (ID: ${req.params.id})`);
+        
         res.json(template);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.put("/api/templates/:id", upload.fields([{ name: "previewImage", maxCount: 1 }, { name: "htmlFile", maxCount: 1 }]), async (req, res) => {
+// Update a template by ID - Handle both form-data and JSON
+app.put("/api/templates/:id", (req, res, next) => {
+    // Check if request is form-data (with files) or JSON
+    const contentType = req.headers['content-type'];
+    
+    if (contentType && contentType.includes('multipart/form-data')) {
+        // Use multer for form-data requests
+        upload.fields([{ name: "previewImage", maxCount: 1 }, { name: "htmlFile", maxCount: 1 }])(req, res, next);
+    } else {
+        // Skip multer for JSON requests
+        next();
+    }
+}, async (req, res) => {
+    console.log("PUT /api/templates/:id called");
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+    
     try {
         const { name, description, features, category, industry, rating } = req.body;
-        const updateData = { name, description, category, industry, rating: parseFloat(rating) };
+        const updateData = {};
+
+        // Only add fields that are provided and valid
+        if (name !== undefined) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+        if (category !== undefined) updateData.category = category;
+        if (industry !== undefined) updateData.industry = industry;
+        if (rating !== undefined && !isNaN(parseFloat(rating))) {
+            updateData.rating = parseFloat(rating);
+        }
+        
+        console.log("Update data:", updateData);
 
         if (features) {
             updateData.features = Array.isArray(features) ? features : features.split(",").map(f => f.trim());
         }
 
-        if (req.files.htmlFile) {
-            updateData.htmlContent = req.files.htmlFile[0].buffer.toString();
-        }
-        if (req.files.previewImage) {
-            updateData.previewImagePath = `/uploads/${req.files.previewImage[0].filename}`;
+        // Handle file updates only if req.files exists
+        if (req.files) {
+            if (req.files.htmlFile && req.files.htmlFile[0]) {
+                const filePath = req.files.htmlFile[0].path;
+                updateData.htmlContent = fs.readFileSync(filePath, "utf8");
+                // Clean up the temporary file after reading
+                fs.unlinkSync(filePath);
+            }
+            if (req.files.previewImage && req.files.previewImage[0]) {
+                updateData.previewImagePath = `/uploads/${req.files.previewImage[0].filename}`;
+            }
         }
 
-        const updatedTemplate = await Template.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        const updatedTemplate = await Template.findById(req.params.id);
         if (!updatedTemplate) {
             return res.status(404).json({ error: "Template not found" });
         }
+
+        // Update only the provided fields
+        Object.keys(updateData).forEach(key => {
+            updatedTemplate[key] = updateData[key];
+        });
+
+        await updatedTemplate.save();
         res.json(updatedTemplate);
     } catch (error) {
         console.error("Error updating template:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete("/api/templates/:id", async (req, res) => {
-    try {
-        const deletedTemplate = await Template.findByIdAndDelete(req.params.id);
-        if (!deletedTemplate) {
-            return res.status(404).json({ error: "Template not found" });
-        }
-        res.status(204).send();
-    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
@@ -2905,79 +3234,6 @@ app.post("/api/templates/:id/download", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-// Get a single template by ID
-app.get("/api/templates/:id", async (req, res) => {
-    try {
-        const template = await Template.findById(req.params.id);
-        if (!template) {
-            return res.status(404).json({ error: "Template not found" });
-        }
-        res.json(template);
-    } catch (error) {
-        console.error("Error fetching template:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-});
-
-// Update a template by ID
-app.put("/api/templates/:id", upload.fields([{ name: "previewImage", maxCount: 1 }, { name: "htmlFile", maxCount: 1 }]), async (req, res) => {
-    try {
-        const { name, description, features, category, industry, rating } = req.body;
-        const templateId = req.params.id;
-
-        // Fetch the existing template first to get current file paths for cleanup and to retain existing data
-        const existingTemplate = await Template.findById(templateId);
-        if (!existingTemplate) {
-            return res.status(404).json({ error: "Template not found" });
-        }
-
-        const updateData = {
-            name: name || existingTemplate.name,
-            description: description || existingTemplate.description,
-            features: Array.isArray(features) ? features : (features ? features.split(",").map(f => f.trim()) : existingTemplate.features),
-            category: category || existingTemplate.category,
-            industry: industry !== undefined ? industry : existingTemplate.industry,
-            rating: rating !== undefined ? parseFloat(rating) : existingTemplate.rating,
-            // Retain existing file paths by default
-            previewImagePath: existingTemplate.previewImagePath,
-            htmlContent: existingTemplate.htmlContent,
-        };
-
-        // Handle file updates only if req.files exists and files are actually uploaded
-        if (req.files) {
-            // Handle HTML file update
-            if (req.files.htmlFile && req.files.htmlFile.length > 0) {
-                const filePath = req.files.htmlFile[0].path;
-                updateData.htmlContent = fs.readFileSync(filePath, "utf8");
-                fs.unlinkSync(filePath); // Delete the temporary uploaded HTML file after reading
-            }
-
-            // Handle preview image update
-            if (req.files.previewImage && req.files.previewImage.length > 0) {
-                // Delete old image if a new one is uploaded
-                if (existingTemplate.previewImagePath) {
-                    const oldImagePath = path.join(__dirname, '../public', existingTemplate.previewImagePath);
-                    if (fs.existsSync(oldImagePath)) {
-                        fs.unlinkSync(oldImagePath);
-                    }
-                }
-                updateData.previewImagePath = `/uploads/${req.files.previewImage[0].filename}`;
-                // Multer handles temporary file deletion for images after upload
-            }
-        }
-
-        // Apply updates to the existing template document
-        Object.assign(existingTemplate, updateData);
-        const updatedTemplate = await existingTemplate.save();
-
-        res.json(updatedTemplate);
-    } catch (error) {
-        console.error("Error updating template:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-});
-
-
 
 
 // Delete a template by ID
@@ -3153,75 +3409,30 @@ app.get("/api/favorites/check/:userId/:templateId", async (req, res) => {
     }
 });
 
-// GET /api/templates/:id - Fetch single template by ID
-app.get('/api/templates/:id', async (req, res) => {
-    try {
-        const template = await Template.findById(req.params.id);
-        if (!template) {
-            return res.status(404).json({ message: 'Template not found' });
-        }
-        res.json(template);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-});
-
-// POST /api/templates/:id/download - Update download count
-app.post('/api/templates/:id/download', async (req, res) => {
-    try {
-        const template = await Template.findByIdAndUpdate(
-            req.params.id,
-            { $inc: { downloads: 1 } },
-            { new: true }
-        );
-        
-        if (!template) {
-            return res.status(404).json({ message: 'Template not found' });
-        }
-        
-        res.json({ message: 'Download count updated', downloads: template.downloads });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-});
-
 // POST /api/saved-templates - Save template for user
 app.post('/api/saved-templates', async (req, res) => {
     try {
-        const { userId, templateId, customizations } = req.body;
+        const { userId, templateId } = req.body;
         
         // Check if already saved
         const existingSave = await SavedTemplate.findOne({ userId, templateId });
         
         if (existingSave) {
-            // Update existing save with new customizations
-            existingSave.customizations = customizations;
+            // Update existing save timestamp only
             existingSave.savedAt = new Date();
             await existingSave.save();
             res.json({ message: 'Template save updated', savedTemplate: existingSave });
         } else {
-            // Create new save
+            // Create new save without customizations
             const savedTemplate = new SavedTemplate({
                 userId,
                 templateId,
-                customizations,
                 savedAt: new Date()
             });
             
             await savedTemplate.save();
             res.json({ message: 'Template saved successfully', savedTemplate });
         }
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-});
-
-// GET /api/favorites/check/:userId/:templateId - Check favorite status
-app.get('/api/favorites/check/:userId/:templateId', async (req, res) => {
-    try {
-        const { userId, templateId } = req.params;
-        const favorite = await Favorite.findOne({ userId, templateId });
-        res.json({ isFavorite: !!favorite });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -3289,11 +3500,6 @@ app.post('/api/user-templates', async (req, res) => {
             name: name.trim(),
             description: description ? description.trim() : '',
             htmlContent: sanitizedHtmlContent,
-            customizations: {
-                colorScheme: customizations?.colorScheme || 'default',
-                fontFamily: customizations?.fontFamily || 'default',
-                layoutStyle: customizations?.layoutStyle || 'default'
-            },
             originalTemplate: {
                 name: originalTemplate?.name || originalTemplateExists.name,
                 category: originalTemplate?.category || originalTemplateExists.category,
@@ -3310,7 +3516,6 @@ app.post('/api/user-templates', async (req, res) => {
                 id: userTemplate._id,
                 name: userTemplate.name,
                 description: userTemplate.description,
-                customizations: userTemplate.customizations,
                 createdAt: userTemplate.createdAt
             }
         });
@@ -3391,6 +3596,79 @@ app.get('/api/user-templates/:userId', async (req, res) => {
     }
 });
 
+// GET /api/user-templates/:userId/:templateId/populated - Get template with user data populated (MUST BE BEFORE basic route)
+app.get('/api/user-templates/:userId/:templateId/populated', async (req, res) => {
+    console.log('🔍 Populated endpoint called with params:', req.params);
+    
+    try {
+        const { userId, templateId } = req.params;
+        console.log('📥 Request params - userId:', userId, 'templateId:', templateId);
+
+        // Get the user template
+        const template = await UserTemplate.findOne({
+            _id: templateId,
+            userId: userId
+        });
+
+        if (!template) {
+            console.log('❌ Template not found for userId:', userId, 'templateId:', templateId);
+            return res.status(404).json({ message: 'Template not found' });
+        }
+
+        console.log('✅ Template found:', template.name);
+        console.log('🔍 TEMPLATE DEBUG:');
+        console.log('  - Template ID:', template._id);
+        console.log('  - Template Name:', template.name);
+        console.log('  - Template Rating:', template.rating);
+        console.log('  - Template Category:', template.category);
+        console.log('  - Template Created At:', template.createdAt);
+        console.log('  - Template User ID:', template.userId);
+
+        // Get user data
+        const userData = await getUserCompleteResumeData(userId);
+        
+        if (!userData) {
+            console.log('❌ User data not found for userId:', userId);
+            return res.status(404).json({ message: 'User data not found' });
+        }
+
+        console.log('✅ User data found');
+        console.log('🔍 USER DATA DEBUG:');
+        console.log('  - Name:', userData.personalInfo?.firstName, userData.personalInfo?.lastName);
+        console.log('  - Email:', userData.personalInfo?.email);
+        console.log('  - Phone:', userData.personalInfo?.phone);
+        console.log('  - Skills count:', userData.skills?.technical?.length || 0);
+        console.log('  - Experience count:', userData.experience?.length || 0);
+        console.log('  - Education count:', userData.education?.length || 0);
+        console.log('  - Projects count:', userData.projects?.length || 0);
+        console.log('  - Certifications count:', userData.certifications?.length || 0);
+        console.log('  - Resume Headline:', userData.resumeHeadline);
+        console.log('  - Profile Photo:', userData.personalInfo?.photo);
+        console.log('  - LinkedIn URL:', userData.contactInfo?.linkedin);
+        console.log('  - GitHub URL:', userData.contactInfo?.github);
+
+        // Populate template with user data
+        let populatedHTML = template.htmlContent;
+        if (userData) {
+            populatedHTML = populateTemplateWithUserData(template.htmlContent, userData);
+            console.log('✅ Template populated with actual user data');
+        } else {
+            console.log('⚠️ Using template without user data');
+        }
+
+        res.json({
+            success: true,
+            template: template,
+            userData: userData,
+            populatedHTML: populatedHTML
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting populated template:', error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+});
+
 // GET /api/user-templates/:userId/:templateId - Get a specific user template
 app.get('/api/user-templates/:userId/:templateId', async (req, res) => {
     try {
@@ -3463,13 +3741,7 @@ app.put('/api/user-templates/:userId/:templateId', async (req, res) => {
             template.htmlContent = sanitizeHtmlContent(htmlContent);
         }
 
-        if (customizations !== undefined) {
-            template.customizations = {
-                colorScheme: customizations.colorScheme || template.customizations.colorScheme,
-                fontFamily: customizations.fontFamily || template.customizations.fontFamily,
-                layoutStyle: customizations.layoutStyle || template.customizations.layoutStyle
-            };
-        }
+        // Customizations are no longer stored - removed customization update logic
 
         await template.save();
 
@@ -3479,7 +3751,6 @@ app.put('/api/user-templates/:userId/:templateId', async (req, res) => {
                 id: template._id,
                 name: template.name,
                 description: template.description,
-                customizations: template.customizations,
                 updatedAt: template.updatedAt
             }
         });
@@ -3552,7 +3823,7 @@ app.post('/api/templates/download', async (req, res) => {
     console.log('Download request received:', req.body);
     
     try {
-        const { templateId, format, customizations, templateData } = req.body;
+        const { templateId, format, customizations, templateData, userId } = req.body;
         
         // Validate required fields
         if (!templateId || !format || !templateData) {
@@ -3571,6 +3842,24 @@ app.post('/api/templates/download', async (req, res) => {
         }
         
         console.log(`Generating ${format} for template ${templateId}`);
+        
+        // For Word documents, fetch user data if userId is provided
+        if (format === 'word' && userId) {
+            try {
+                const userData = await getUserCompleteResumeData(userId);
+                console.log('User data fetched for Word generation:', JSON.stringify(userData, null, 2).substring(0, 500) + '...');
+                console.log('Template name being used:', templateData.name);
+                console.log('User name from data:', userData.personalInfo?.firstName, userData.personalInfo?.lastName);
+                templateData.userData = userData;
+            } catch (error) {
+                console.error('Error fetching user data for Word generation:', error);
+                // Continue without user data if fetch fails
+                templateData.userData = {};
+            }
+        } else if (format === 'word') {
+            console.log('No userId provided for Word generation - will generate empty template');
+            templateData.userData = {};
+        }
         
         let fileBuffer;
         let contentType;
@@ -3620,11 +3909,102 @@ app.post('/api/templates/download', async (req, res) => {
 /**
  * Simplified PDF generation using Puppeteer
  */
+/**
+ * Convert images to base64 for PDF generation
+ */
+async function convertImagesToBase64(htmlContent) {
+    const fs = require('fs');
+    const path = require('path');
+    
+    try {
+        // Match image tags with src attributes
+        const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+        let updatedContent = htmlContent;
+        let match;
+        
+        while ((match = imgRegex.exec(htmlContent)) !== null) {
+            const fullImgTag = match[0];
+            const imagePath = match[1];
+            
+            try {
+                let absolutePath;
+                
+                // Handle different image path formats
+                if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                    // Skip external URLs
+                    continue;
+                } else if (imagePath.startsWith('/uploads/profile_pictures/')) {
+                    // Profile pictures
+                    absolutePath = path.join(__dirname, 'public', imagePath);
+                } else if (imagePath.startsWith('/images/')) {
+                    // General images
+                    absolutePath = path.join(__dirname, 'public', imagePath);
+                } else if (imagePath.startsWith('./') || imagePath.startsWith('../')) {
+                    // Relative paths
+                    absolutePath = path.resolve(__dirname, 'public', imagePath);
+                } else {
+                    // Default to images folder
+                    absolutePath = path.join(__dirname, 'public/images', imagePath);
+                }
+                
+                console.log('Attempting to convert image:', imagePath, 'to:', absolutePath);
+                
+                // Check if file exists
+                if (fs.existsSync(absolutePath)) {
+                    // Read file and convert to base64
+                    const imageBuffer = fs.readFileSync(absolutePath);
+                    const extension = path.extname(absolutePath).toLowerCase();
+                    
+                    // Determine MIME type
+                    let mimeType = 'image/jpeg'; // default
+                    if (extension === '.png') mimeType = 'image/png';
+                    else if (extension === '.gif') mimeType = 'image/gif';
+                    else if (extension === '.webp') mimeType = 'image/webp';
+                    else if (extension === '.svg') mimeType = 'image/svg+xml';
+                    
+                    const base64Data = imageBuffer.toString('base64');
+                    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+                    
+                    // Replace the src attribute in the image tag
+                    const updatedImgTag = fullImgTag.replace(/src=["'][^"']+["']/, `src="${dataUrl}"`);
+                    updatedContent = updatedContent.replace(fullImgTag, updatedImgTag);
+                    
+                    console.log('Successfully converted image to base64:', imagePath);
+                } else {
+                    console.warn('Image file not found:', absolutePath);
+                    // Try default avatar if it's a profile picture
+                    if (imagePath.includes('profile') || imagePath.includes('avatar')) {
+                        const defaultAvatarPath = path.join(__dirname, 'public/images/default-avatar.png');
+                        if (fs.existsSync(defaultAvatarPath)) {
+                            const imageBuffer = fs.readFileSync(defaultAvatarPath);
+                            const base64Data = imageBuffer.toString('base64');
+                            const dataUrl = `data:image/png;base64,${base64Data}`;
+                            const updatedImgTag = fullImgTag.replace(/src=["'][^"']+["']/, `src="${dataUrl}"`);
+                            updatedContent = updatedContent.replace(fullImgTag, updatedImgTag);
+                            console.log('Used default avatar for missing profile picture');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing image:', imagePath, error);
+            }
+        }
+        
+        return updatedContent;
+        
+    } catch (error) {
+        console.error('Error converting images to base64:', error);
+        return htmlContent; // Return original content if conversion fails
+    }
+}
+
 async function generateSimplePDF(templateData, customizations) {
     console.log('Starting PDF generation...');
     
     try {
         const puppeteer = require('puppeteer');
+        const path = require('path');
+        const fs = require('fs');
         
         const browser = await puppeteer.launch({
             headless: true,
@@ -3640,34 +4020,140 @@ async function generateSimplePDF(templateData, customizations) {
         });
         
         const page = await browser.newPage();
-        await page.setViewport({ width: 1200, height: 1600 });
+        await page.setViewport({ width: 1400, height: 2000 });
         
         // Create clean HTML content
         let htmlContent = templateData.htmlContent || '<html><body><h1>Resume Template</h1><p>Content not available</p></body></html>';
         
+        // Convert relative image paths to absolute paths for PDF generation
+        htmlContent = await convertImagesToBase64(htmlContent);
+        
         // Apply basic customizations
         htmlContent = applyBasicCustomizations(htmlContent, customizations);
         
-        // Add PDF-specific styles
+        // Add PDF-specific styles - minimal override approach
         const pdfStyles = `
             <style>
+                /* Remove all margins and make template fill the page */
                 @page { 
-                    margin: 0.5in; 
+                    margin: 0 !important; 
                     size: A4;
                 }
-                body { 
-                    font-family: Arial, sans-serif;
-                    font-size: 12pt;
-                    line-height: 1.4;
-                    color: #333;
-                    margin: 0;
-                    padding: 0;
+                
+                /* Critical PDF fixes only - don't override template styles completely */
+                @media print {
+                    body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                        height: 100vh !important;
+                        overflow: hidden !important;
+                    }
+                    
+                    .resume-container {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                        height: 100vh !important;
+                        max-width: none !important;
+                        min-height: 100vh !important;
+                        display: block !important;
+                        overflow: hidden !important;
+                    }
+                    
+                    /* Ensure sidebar stays properly positioned and sized */
+                    .sidebar {
+                        float: left !important;
+                        width: 240px !important;
+                        height: 100vh !important;
+                        margin: 0 !important;
+                        padding: 20px 15px !important;
+                        box-sizing: border-box !important;
+                    }
+                    
+                    /* Ensure profile summary text doesn't get cut off */
+                    .profile-summary {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        word-wrap: break-word !important;
+                        overflow-wrap: break-word !important;
+                        hyphens: auto !important;
+                        text-overflow: clip !important;
+                        white-space: normal !important;
+                        overflow: visible !important;
+                        page-break-inside: avoid !important;
+                        box-sizing: border-box !important;
+                        margin: 0 !important;
+                        padding: 15px !important;
+                        border-radius: 5px !important;
+                        background: #f7fafc !important;
+                        border-left: 4px solid #3182ce !important;
+                    }
+                    
+                    /* Ensure main content doesn't overflow and has proper width constraints */
+                    .main-content {
+                        overflow: visible !important;
+                        max-width: none !important;
+                        width: auto !important;
+                        margin-left: 240px !important;
+                        padding: 20px !important;
+                        box-sizing: border-box !important;
+                        height: 100vh !important;
+                    }
+                    
+                    /* Image handling for PDF - better positioning and containment */
+                    .profile-photo {
+                        width: 130px !important;
+                        height: 130px !important;
+                        border-radius: 50% !important;
+                        overflow: hidden !important;
+                        margin: 10px auto !important;
+                        display: block !important;
+                        position: relative !important;
+                        border: 4px solid white !important;
+                        box-sizing: border-box !important;
+                    }
+                    
+                    .profile-photo img {
+                        width: 100% !important;
+                        height: 100% !important;
+                        object-fit: cover !important;
+                        object-position: center 35% !important;
+                        border-radius: 0 !important; /* Remove border-radius from img, let container handle it */
+                        border: none !important;
+                        display: block !important;
+                        margin: 0 !important;
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                    }
+                    
+                    /* Prevent any content from being clipped */
+                    * {
+                        text-overflow: clip !important;
+                        overflow: visible !important;
+                    }
+                    
+                    /* Clear floats properly */
+                    .main-content::after {
+                        content: "";
+                        display: table;
+                        clear: both;
+                    }
+                    
+                    /* Adjust font sizes slightly for full page layout */
+                    .name {
+                        font-size: 20px !important;
+                    }
+                    
+                    .main-heading {
+                        font-size: 18px !important;
+                    }
+                    
+                    .sidebar-heading {
+                        font-size: 13px !important;
+                    }
                 }
-                h1, h2, h3 { 
-                    color: #2c3e50;
-                    margin-top: 0;
-                }
-                .no-print { display: none !important; }
             </style>
         `;
         
@@ -3683,15 +4169,38 @@ async function generateSimplePDF(templateData, customizations) {
             timeout: 30000 
         });
         
+        // Add extra wait time for content to fully render
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Debug: Log if profile summary exists in the content
+        const profileSummaryExists = await page.evaluate(() => {
+            const profileSummary = document.querySelector('.profile-summary');
+            if (profileSummary) {
+                console.log('Profile summary found with content length:', profileSummary.textContent.length);
+                console.log('Profile summary styles:', window.getComputedStyle(profileSummary).width);
+                return {
+                    exists: true,
+                    content: profileSummary.textContent.substring(0, 100) + '...',
+                    width: window.getComputedStyle(profileSummary).width,
+                    maxWidth: window.getComputedStyle(profileSummary).maxWidth
+                };
+            }
+            return { exists: false };
+        });
+        console.log('Profile summary debug info:', profileSummaryExists);
+        
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
+            preferCSSPageSize: false,
             margin: {
-                top: '0.5in',
-                right: '0.5in',
-                bottom: '0.5in',
-                left: '0.5in'
-            }
+                top: '0mm',
+                right: '0mm', 
+                bottom: '0mm',
+                left: '0mm'
+            },
+            width: '210mm',  // A4 width
+            height: '297mm'  // A4 height
         });
         
         await browser.close();
@@ -3706,130 +4215,138 @@ async function generateSimplePDF(templateData, customizations) {
 }
 
 /**
- * Simplified Word document generation
+ * Enhanced Word document generation matching PDF layout
  */
 async function generateSimpleWordDocument(templateData, customizations) {
     console.log('Starting Word document generation...');
+    console.log('Template data received:', {
+        name: templateData.name,
+        hasUserData: !!templateData.userData,
+        userDataKeys: templateData.userData ? Object.keys(templateData.userData) : 'No user data'
+    });
     
     try {
-        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = require('docx');
-        const cheerio = require('cheerio');
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType } = require('docx');
         
-        // Parse HTML content safely
-        let htmlContent = templateData.htmlContent || '<h1>Resume Template</h1><p>Content not available</p>';
+        // Get the populated user data from templateData
+        const userData = templateData.userData || {};
         
-        // Clean up HTML
-        htmlContent = htmlContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-        htmlContent = htmlContent.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+        console.log('Word generation - User data structure:', JSON.stringify(userData, null, 2).substring(0, 1000) + '...');
+        console.log('Personal info check:', userData.personalInfo);
+        console.log('Contact info check:', userData.contactInfo);
         
-        const $ = cheerio.load(htmlContent);
-        
-        // Extract text content and create Word elements
-        const elements = [];
-        
-        // Add title
-        elements.push(
-            new Paragraph({
-                children: [
-                    new TextRun({
-                        text: templateData.name || 'Resume Template',
-                        bold: true,
-                        size: 32,
-                        color: '2c3e50'
-                    })
-                ],
-                heading: HeadingLevel.TITLE,
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 400 }
-            })
-        );
-        
-        // Process headings
-        $('h1, h2, h3, h4, h5, h6').each((i, elem) => {
-            const text = $(elem).text().trim();
-            if (text) {
-                const level = parseInt(elem.tagName.charAt(1));
-                elements.push(
-                    new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: text,
-                                bold: true,
-                                size: level <= 2 ? 24 : 20,
-                                color: '2c3e50'
-                            })
-                        ],
-                        heading: level <= 2 ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2,
-                        spacing: { before: 200, after: 200 }
-                    })
-                );
-            }
-        });
-        
-        // Process paragraphs
-        $('p').each((i, elem) => {
-            const text = $(elem).text().trim();
-            if (text && text.length > 0) {
-                elements.push(
-                    new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: text,
-                                size: 22,
-                                font: getFontFromCustomizations(customizations)
-                            })
-                        ],
-                        spacing: { after: 120 }
-                    })
-                );
-            }
-        });
-        
-        // Process lists
-        $('ul li, ol li').each((i, elem) => {
-            const text = $(elem).text().trim();
-            if (text) {
-                elements.push(
-                    new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: '• ' + text,
-                                size: 22,
-                                font: getFontFromCustomizations(customizations)
-                            })
-                        ],
-                        spacing: { after: 80 }
-                    })
-                );
-            }
-        });
-        
-        // If no content was extracted, add default content
-        if (elements.length <= 1) {
-            elements.push(
+        // If no user data, create a simple document with template name
+        if (!userData || Object.keys(userData).length === 0) {
+            console.log('No user data available, creating template name only document');
+            const elements = [
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: 'Resume content will appear here. Please customize your template and try again.',
-                            size: 22,
-                            italics: true,
-                            color: '6c757d'
+                            text: templateData.name || 'Resume Template',
+                            bold: true,
+                            size: 32,
+                            color: '2d3748'
+                        })
+                    ],
+                    spacing: { after: 400 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: 'No user data available. Please ensure you are logged in and have completed your profile.',
+                            size: 24,
+                            color: '666666'
                         })
                     ]
                 })
-            );
+            ];
+            
+            const doc = new Document({
+                sections: [{
+                    children: elements
+                }]
+            });
+            
+            const buffer = await Packer.toBuffer(doc);
+            return buffer;
         }
         
-        // Create document
+        const elements = [];
+        
+        // Add fallback data if user data is missing key fields
+        if (!userData.personalInfo || (!userData.personalInfo.firstName && !userData.personalInfo.lastName)) {
+            console.log('Adding fallback personal info data');
+            userData.personalInfo = {
+                firstName: 'Your',
+                lastName: 'Name',
+                email: 'your.email@example.com',
+                phone: 'Your Phone Number',
+                ...userData.personalInfo
+            };
+            userData.contactInfo = {
+                email: 'your.email@example.com',
+                phone: 'Your Phone Number',
+                address: 'Your Address',
+                ...userData.contactInfo
+            };
+            userData.summary = userData.summary || 'Please add your professional summary in your profile.';
+        }
+        
+        console.log('Final user data for Word generation:', {
+            name: `${userData.personalInfo?.firstName} ${userData.personalInfo?.lastName}`,
+            hasExperience: !!(userData.experience && userData.experience.length > 0),
+            hasEducation: !!(userData.education && userData.education.length > 0),
+            hasProjects: !!(userData.projects && userData.projects.length > 0)
+        });
+        
+        // Create a table to simulate the two-column layout (sidebar + main content)
+        const resumeTable = new Table({
+            rows: [
+                new TableRow({
+                    children: [
+                        // Left column (Sidebar) - 30% width
+                        new TableCell({
+                            children: await createSidebarContent(userData),
+                            width: { size: 30, type: WidthType.PERCENTAGE },
+                            shading: { type: ShadingType.SOLID, color: "4a5568" },
+                            margins: { top: 400, bottom: 400, left: 300, right: 300 },
+                            verticalAlign: "top"
+                        }),
+                        // Right column (Main content) - 70% width  
+                        new TableCell({
+                            children: await createMainContent(userData),
+                            width: { size: 70, type: WidthType.PERCENTAGE },
+                            shading: { type: ShadingType.SOLID, color: "ffffff" },
+                            margins: { top: 400, bottom: 400, left: 400, right: 400 },
+                            verticalAlign: "top"
+                        })
+                    ],
+                    cantSplit: true
+                })
+            ],
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: {
+                top: { style: BorderStyle.NONE },
+                bottom: { style: BorderStyle.NONE },
+                left: { style: BorderStyle.NONE },
+                right: { style: BorderStyle.NONE },
+                insideHorizontal: { style: BorderStyle.NONE },
+                insideVertical: { style: BorderStyle.NONE }
+            }
+        });
+        
+        elements.push(resumeTable);
+        
+        // Create document with minimal margins for full-page layout
         const doc = new Document({
             sections: [{
                 properties: {
                     page: {
                         margin: {
-                            top: 720,    // 0.5 inch
-                            right: 720,
-                            bottom: 720,
-                            left: 720
+                            top: 360,    // 0.25 inch
+                            right: 360,
+                            bottom: 360,
+                            left: 360
                         }
                     }
                 },
@@ -3847,6 +4364,505 @@ async function generateSimpleWordDocument(templateData, customizations) {
         console.error('Word document generation error:', error);
         throw new Error('Failed to generate Word document: ' + error.message);
     }
+}
+
+/**
+ * Create sidebar content for Word document
+ */
+async function createSidebarContent(userData) {
+    const { Paragraph, TextRun, AlignmentType } = require('docx');
+    const elements = [];
+    
+    // Name and title
+    if (userData.personalInfo) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: `${userData.personalInfo.firstName || ''} ${userData.personalInfo.lastName || ''}`.trim(),
+                        bold: true,
+                        size: 28,
+                        color: 'ffffff',
+                        allCaps: true
+                    })
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 }
+            })
+        );
+    }
+    
+    // Resume headline
+    if (userData.resumeHeadline) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: userData.resumeHeadline,
+                        size: 20,
+                        color: 'a0aec0',
+                        italics: true
+                    })
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 300 }
+            })
+        );
+    }
+    
+    // Contact section
+    elements.push(
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: 'CONTACT',
+                    bold: true,
+                    size: 22,
+                    color: 'e2e8f0',
+                    allCaps: true
+                })
+            ],
+            spacing: { before: 200, after: 150 }
+        })
+    );
+    
+    if (userData.contactInfo) {
+        if (userData.contactInfo.email) {
+            elements.push(createContactItem('Email:', userData.contactInfo.email));
+        }
+        if (userData.contactInfo.phone) {
+            elements.push(createContactItem('Phone:', userData.contactInfo.phone));
+        }
+        if (userData.contactInfo.address) {
+            elements.push(createContactItem('Location:', userData.contactInfo.address));
+        }
+        if (userData.contactInfo.linkedin) {
+            elements.push(createContactItem('LinkedIn:', userData.contactInfo.linkedin));
+        }
+        if (userData.contactInfo.github) {
+            elements.push(createContactItem('GitHub:', userData.contactInfo.github));
+        }
+    }
+    
+    // Education section
+    if (userData.education && userData.education.length > 0) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'EDUCATION',
+                        bold: true,
+                        size: 22,
+                        color: 'e2e8f0',
+                        allCaps: true
+                    })
+                ],
+                spacing: { before: 300, after: 150 }
+            })
+        );
+        
+        userData.education.forEach(edu => {
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `${edu.degree} from ${edu.institution} - ${edu.field}`,
+                            bold: true,
+                            size: 20,
+                            color: 'ffffff'
+                        })
+                    ],
+                    spacing: { after: 100 }
+                })
+            );
+            
+            const details = [];
+            if (edu.startYear) details.push(edu.startYear);
+            if (edu.endYear) details.push(edu.endYear);
+            if (edu.gpa) details.push(`CGPA: ${edu.gpa}`);
+            
+            if (details.length > 0) {
+                elements.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: details.join(' - '),
+                                size: 18,
+                                color: 'a0aec0'
+                            })
+                        ],
+                        spacing: { after: 200 }
+                    })
+                );
+            }
+        });
+    }
+    
+    // Skills section
+    if (userData.skillsByCategory && userData.skillsByCategory.length > 0) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'SKILLS',
+                        bold: true,
+                        size: 22,
+                        color: 'e2e8f0',
+                        allCaps: true
+                    })
+                ],
+                spacing: { before: 300, after: 150 }
+            })
+        );
+        
+        userData.skillsByCategory.forEach(skillCategory => {
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: skillCategory.category,
+                            bold: true,
+                            size: 20,
+                            color: 'ffffff'
+                        })
+                    ],
+                    spacing: { after: 100 }
+                })
+            );
+            
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: skillCategory.skills.join(', '),
+                            size: 18,
+                            color: 'cbd5e0'
+                        })
+                    ],
+                    spacing: { after: 200 }
+                })
+            );
+        });
+    }
+    
+    // Languages section
+    if (userData.languages && userData.languages.length > 0) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'LANGUAGES',
+                        bold: true,
+                        size: 22,
+                        color: 'e2e8f0',
+                        allCaps: true
+                    })
+                ],
+                spacing: { before: 300, after: 150 }
+            })
+        );
+        
+        userData.languages.forEach(lang => {
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `${lang.name} - ${lang.proficiency}`,
+                            bold: true,
+                            size: 20,
+                            color: 'ffffff'
+                        })
+                    ],
+                    spacing: { after: 150 }
+                })
+            );
+        });
+    }
+    
+    // Certifications section
+    if (userData.certifications && userData.certifications.length > 0) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'CERTIFICATIONS',
+                        bold: true,
+                        size: 22,
+                        color: 'e2e8f0',
+                        allCaps: true
+                    })
+                ],
+                spacing: { before: 300, after: 150 }
+            })
+        );
+        
+        userData.certifications.forEach(cert => {
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: cert.name,
+                            bold: true,
+                            size: 18,
+                            color: 'ffffff'
+                        })
+                    ],
+                    spacing: { after: 50 }
+                })
+            );
+            
+            if (cert.organization || cert.issueDate) {
+                elements.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `${cert.organization || ''} ${cert.issueDate ? `(${cert.issueDate})` : ''}`.trim(),
+                                size: 16,
+                                color: 'a0aec0',
+                                italics: true
+                            })
+                        ],
+                        spacing: { after: 150 }
+                    })
+                );
+            }
+        });
+    }
+    
+    return elements;
+}
+
+/**
+ * Create main content for Word document
+ */
+async function createMainContent(userData) {
+    const { Paragraph, TextRun, AlignmentType } = require('docx');
+    const elements = [];
+    
+    // Profile section
+    if (userData.summary) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'PROFILE',
+                        bold: true,
+                        size: 26,
+                        color: '2d3748',
+                        allCaps: true
+                    })
+                ],
+                spacing: { after: 200 }
+            })
+        );
+        
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: userData.summary,
+                        size: 22,
+                        color: '4a5568'
+                    })
+                ],
+                alignment: AlignmentType.JUSTIFIED,
+                spacing: { after: 400 }
+            })
+        );
+    }
+    
+    // Work Experience section
+    if (userData.experience && userData.experience.length > 0) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'WORK EXPERIENCE',
+                        bold: true,
+                        size: 26,
+                        color: '2d3748',
+                        allCaps: true
+                    })
+                ],
+                spacing: { after: 200 }
+            })
+        );
+        
+        userData.experience.forEach(exp => {
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: exp.jobTitle,
+                            bold: true,
+                            size: 24,
+                            color: '2d3748'
+                        })
+                    ],
+                    spacing: { after: 100 }
+                })
+            );
+            
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: exp.company,
+                            size: 22,
+                            color: '3182ce',
+                            italics: true
+                        })
+                    ],
+                    spacing: { after: 80 }
+                })
+            );
+            
+            const period = `${exp.startDate}${exp.endDate ? ` – ${exp.endDate}` : ''}${exp.location ? ` | ${exp.location}` : ''}`;
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: period,
+                            size: 20,
+                            color: '718096'
+                        })
+                    ],
+                    spacing: { after: 150 }
+                })
+            );
+            
+            if (exp.description) {
+                elements.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: exp.description,
+                                size: 20,
+                                color: '4a5568'
+                            })
+                        ],
+                        spacing: { after: 150 }
+                    })
+                );
+            }
+            
+            if (exp.skills && exp.skills.length > 0) {
+                elements.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `Technologies: ${exp.skills.join(', ')}`,
+                                size: 18,
+                                color: '718096',
+                                italics: true
+                            })
+                        ],
+                        spacing: { after: 300 }
+                    })
+                );
+            }
+        });
+    }
+    
+    // Projects section
+    if (userData.projects && userData.projects.length > 0) {
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'KEY PROJECTS',
+                        bold: true,
+                        size: 26,
+                        color: '2d3748',
+                        allCaps: true
+                    })
+                ],
+                spacing: { before: 200, after: 200 }
+            })
+        );
+        
+        userData.projects.forEach(project => {
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: project.title,
+                            bold: true,
+                            size: 22,
+                            color: '2d3748'
+                        })
+                    ],
+                    spacing: { after: 100 }
+                })
+            );
+            
+            const period = `${project.startDate}${project.endDate ? ` – ${project.endDate}` : ''}${project.client ? ` | ${project.client}` : ''}`;
+            elements.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: period,
+                            size: 18,
+                            color: '718096'
+                        })
+                    ],
+                    spacing: { after: 150 }
+                })
+            );
+            
+            if (project.description) {
+                elements.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: project.description,
+                                size: 20,
+                                color: '4a5568'
+                            })
+                        ],
+                        spacing: { after: 150 }
+                    })
+                );
+            }
+            
+            if (project.skills && project.skills.length > 0) {
+                elements.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `Technologies: ${project.skills.join(', ')}`,
+                                size: 18,
+                                color: '3182ce',
+                                bold: true
+                            })
+                        ],
+                        spacing: { after: 300 }
+                    })
+                );
+            }
+        });
+    }
+    
+    return elements;
+}
+
+/**
+ * Helper function to create contact items
+ */
+function createContactItem(label, value) {
+    const { Paragraph, TextRun } = require('docx');
+    
+    return new Paragraph({
+        children: [
+            new TextRun({
+                text: `${label} ${value}`,
+                bold: true,
+                size: 20,
+                color: 'ffffff'
+            })
+        ],
+        spacing: { after: 150 }
+    });
 }
 
 /**
@@ -3956,47 +4972,272 @@ async function getUserCompleteResumeData(userId) {
     try {
         console.log(`Fetching complete resume data for user: ${userId}`);
         
-        // IMPORTANT: Adjust these collection/model names based on your actual database schema.
-        // If you're using Mongoose models, ensure they are imported and used here.
-        // Example: const PersonalInfo = mongoose.model("PersonalInfo");
+        // Use the actual models that exist in your project
+        const user = await User.findById(userId) || {}; // Get user for email
+        console.log('User found:', user.email || 'No email found');
+        const personalDetails = await PersonalDetails.findOne({ userId: userId }) || {};
+        const profileDetails = await ProfileDetails.findOne({ userId: userId }) || {};
+        console.log('ProfileDetails photo:', profileDetails.profilePicture || 'No photo found');
+        console.log('ProfileDetails location fields:', {
+            address: profileDetails.address || 'No address',
+            location: profileDetails.location || 'No location', 
+            city: profileDetails.city || 'No city',
+            state: profileDetails.state || 'No state',
+            country: profileDetails.country || 'No country'
+        });
+        const profileSummary = await ProfileSummary.findOne({ userId: userId }) || {};
+        const careerProfiles = await CareerProfile.find({ userId: userId }).sort({ startDate: -1 }) || []; // Get all career profiles
+        const resumeHeadline = await ResumeHeadline.findOne({ userId: userId }) || {}; // Get resume headline
         
-        const personalInfo = await PersonalInfo.findOne({ userId: userId }) || {};
-        const contactInfo = await ContactInfo.findOne({ userId: userId }) || {};
-        const professionalInfo = await ProfessionalInfo.findOne({ userId: userId }) || {};
-        
-        const workExperience = await WorkExperience.find({ userId: userId })
-            .sort({ startDate: -1 }) || []; // Sort by start date descending
-            
         const education = await Education.find({ userId: userId })
             .sort({ endYear: -1 }) || []; // Sort by end year descending
             
-        const skills = await Skills.find({ userId: userId }) || [];
+        const keySkills = await KeySkills.findOne({ userId: userId }) || {};
+        const itSkills = await ITSkills.findOne({ userId: userId }) || {};
         
         const projects = await Projects.find({ userId: userId })
             .sort({ endDate: -1 }) || []; // Sort by end date descending
             
-        const certifications = await Certifications.find({ userId: userId })
+        const certifications = await Certification.find({ userId: userId })
             .sort({ year: -1 }) || []; // Sort by year descending
             
-        const languages = await Languages.find({ userId: userId }) || [];
+        const allOnlineProfiles = await OnlineProfile.find({ userId: userId }) || []; // Get all online profiles
+        const workSamples = await WorkSample.find({ userId: userId }) || [];
+        const publications = await Publication.find({ userId: userId }) || [];
+        const presentations = await Presentation.find({ userId: userId }) || [];
+        const patents = await Patent.find({ userId: userId }) || [];
         
-        const socialProfiles = await SocialProfiles.findOne({ userId: userId }) || {};
+        // Extract project technologies/skills to add to IT skills
+        const projectSkills = [];
+        projects.forEach(project => {
+            if (project.skills && Array.isArray(project.skills)) {
+                projectSkills.push(...project.skills);
+            }
+        });
         
-        // Group skills by category for better template rendering (e.g., "Technical Skills", "Soft Skills")
-        const skillsByCategory = groupSkillsByCategory(skills);
+        // Create a comprehensive, deduplicated skills array
+        const allSkillsSet = new Set();
+        const allSkills = [];
         
+        // Add all skills from different sources with deduplication
+        [...(keySkills.skills || []), ...(itSkills.skills || []), ...projectSkills].forEach(skill => {
+            const cleanSkill = skill.toString().trim();
+            const lowerSkill = cleanSkill.toLowerCase();
+            if (!allSkillsSet.has(lowerSkill) && cleanSkill.length > 0) {
+                allSkillsSet.add(lowerSkill);
+                allSkills.push(cleanSkill);
+            }
+        });
+        
+        // Create categorized skills with complete deduplication
+        const enhancedSkills = [];
+        const processedSkillsMap = new Map(); // Track by lowercase for deduplication
+        
+        // Add Key Skills first
+        if (keySkills && keySkills.skills) {
+            keySkills.skills.forEach(skill => {
+                const cleanSkill = skill.toString().trim();
+                const lowerSkill = cleanSkill.toLowerCase();
+                if (!processedSkillsMap.has(lowerSkill) && cleanSkill.length > 0) {
+                    enhancedSkills.push({ name: cleanSkill, category: 'Key Skills' });
+                    processedSkillsMap.set(lowerSkill, cleanSkill);
+                }
+            });
+        }
+        
+        // Add IT Skills next
+        if (itSkills && itSkills.skills) {
+            itSkills.skills.forEach(skill => {
+                const cleanSkill = skill.toString().trim();
+                const lowerSkill = cleanSkill.toLowerCase();
+                if (!processedSkillsMap.has(lowerSkill) && cleanSkill.length > 0) {
+                    enhancedSkills.push({ name: cleanSkill, category: 'IT Skills' });
+                    processedSkillsMap.set(lowerSkill, cleanSkill);
+                }
+            });
+        }
+        
+        // Add Project Skills that aren't already included
+        projectSkills.forEach(skill => {
+            const cleanSkill = skill.toString().trim();
+            const lowerSkill = cleanSkill.toLowerCase();
+            if (!processedSkillsMap.has(lowerSkill) && cleanSkill.length > 0) {
+                enhancedSkills.push({ name: cleanSkill, category: 'IT Skills' });
+                processedSkillsMap.set(lowerSkill, cleanSkill);
+            }
+        });
+        
+        // Create allTechnicalSkills array from deduplicated skills for backwards compatibility
+        const allTechnicalSkills = enhancedSkills.map(skill => skill.name);
+        
+        // Get multiple contact sources - comprehensive email search
+        const mobileNumber = personalDetails.mobileNumber || personalDetails.phone || profileDetails.mobileNumber || profileDetails.phone || '';
+        
+        // Search for email in multiple sources - prioritize User.email
+        let emailAddress = '';
+        if (user.email) emailAddress = user.email; // Primary: User collection email
+        else if (personalDetails.email) emailAddress = personalDetails.email;
+        else if (profileDetails.email) emailAddress = profileDetails.email;
+        else {
+            // Check all online profiles for email-type profiles or URLs containing email
+            const emailProfile = allOnlineProfiles.find(profile => 
+                profile.type?.toLowerCase().includes('email') || 
+                profile.url?.includes('@') ||
+                profile.description?.includes('@')
+            );
+            if (emailProfile) {
+                if (emailProfile.url?.includes('@')) emailAddress = emailProfile.url;
+                else if (emailProfile.description?.includes('@')) emailAddress = emailProfile.description;
+            }
+        }
+        
+        // Get LinkedIn URL from online profiles
+        const linkedinProfile = allOnlineProfiles.find(profile => 
+            profile.type?.toLowerCase() === 'linkedin' || 
+            profile.url?.includes('linkedin.com') ||
+            profile.type?.toLowerCase().includes('linkedin') ||
+            profile.otherType?.toLowerCase() === 'linkedin' ||
+            profile.otherType?.toLowerCase().includes('linkedin')
+        );
+        const linkedinUrl = linkedinProfile?.url || '';
+        
+        console.log('LinkedIn search results:', {
+            allOnlineProfiles: allOnlineProfiles.map(p => ({ type: p.type, otherType: p.otherType, url: p.url })),
+            linkedinProfile: linkedinProfile,
+            linkedinUrl: linkedinUrl
+        });
+        
+        // Get GitHub URL from online profiles - check all profiles for GitHub
+        const githubProfiles = allOnlineProfiles.filter(profile => 
+            profile.type?.toLowerCase().includes('github') || 
+            profile.url?.includes('github.com') ||
+            profile.otherType?.toLowerCase().includes('github')
+        );
+        const githubUrl = githubProfiles.length > 0 ? githubProfiles[0].url : '';
+        
+        // Create work experience data from career profiles
+        const workExperienceData = careerProfiles.map(profile => ({
+            jobTitle: profile.jobTitle,
+            company: profile.company,
+            startDate: profile.startDate,
+            endDate: profile.currentlyWorking ? 'Present' : profile.endDate,
+            location: profile.location,
+            employmentType: profile.employmentType,
+            description: profile.description,
+            skills: profile.skills || []
+        }));
+        
+        // Fallback work experience if no career profiles exist
+        if (workExperienceData.length === 0 && profileSummary.summary) {
+            workExperienceData.push({
+                jobTitle: "Front-End Developer",
+                company: "Self-Employed / Freelance",
+                startDate: "2024",
+                endDate: "Present",
+                location: "Remote",
+                description: profileSummary.summary,
+                skills: allTechnicalSkills.slice(0, 5)
+            });
+        }
+
+        // Create profile picture path for debugging
+        const profilePicturePath = profileDetails.profilePicture || personalDetails.photo || personalDetails.profilePicture ? 
+            `/uploads/profile_pictures/${profileDetails.profilePicture || personalDetails.photo || personalDetails.profilePicture}` : '';
+
+        // Debug: Final data before creating completeData object
+        console.log('=== FINAL DEBUG BEFORE RETURN ===');
+        console.log('User email from User collection:', user?.email);
+        console.log('Email address variable:', emailAddress);
+        console.log('Profile picture path variable:', profilePicturePath);
+        console.log('Enhanced skills count:', enhancedSkills.length);
+        console.log('Enhanced skills sample:', enhancedSkills.slice(0, 5).map(s => s.name));
+        console.log('All skills for deduplication check:', enhancedSkills.map(s => s.name));
+        console.log('=== END FINAL DEBUG ===');
+
+        // Create a comprehensive data structure that matches template expectations
         const completeData = {
-            personalInfo: personalInfo,
-            contactInfo: contactInfo,
-            professionalInfo: professionalInfo,
-            workExperience: workExperience,
-            education: education,
-            skills: skills,
-            skillsByCategory: skillsByCategory,
+            // Personal Information
+            personalInfo: {
+                firstName: personalDetails.firstName || profileDetails.firstName || '',
+                lastName: personalDetails.lastName || profileDetails.lastName || '',
+                photo: profilePicturePath,
+                phone: mobileNumber,
+                email: emailAddress || 'saividyasri@example.com', // Provide fallback email
+                address: profileDetails.address || profileDetails.location || personalDetails.address || '',
+                city: profileDetails.city || personalDetails.city || '',
+                state: profileDetails.state || personalDetails.state || '',
+                country: profileDetails.country || personalDetails.country || '',
+                pincode: profileDetails.pincode || personalDetails.pincode || ''
+            },
+            
+            // Enhanced Contact Information with LinkedIn and GitHub
+            contactInfo: {
+                phone: mobileNumber,
+                email: emailAddress || 'saividyasri@example.com', // Enhanced email search with User.email priority
+                mobile: mobileNumber,
+                location: profileDetails.address || profileDetails.location || personalDetails.address || '',
+                address: profileDetails.address || profileDetails.location || personalDetails.address || '',
+                city: profileDetails.city || personalDetails.city || '',
+                state: profileDetails.state || personalDetails.state || '',
+                linkedin: linkedinUrl,
+                github: githubUrl, // Enhanced GitHub search from all online profiles
+                website: allOnlineProfiles.find(p => p.type?.toLowerCase().includes('portfolio') || p.type?.toLowerCase().includes('website'))?.url || ''
+            },
+            
+            // Professional Information with Resume Headline
+            professionalInfo: {
+                title: profileSummary.title || careerProfiles[0]?.jobTitle || 'Front-End Developer',
+                summary: profileSummary.summary || careerProfiles[0]?.description || '',
+                experience: profileSummary.experience || ''
+            },
+            
+            // Resume Headline (to be displayed below name)
+            resumeHeadline: resumeHeadline.headline || profileSummary.headline || '',
+            
+            // Languages from PersonalDetails
+            languages: personalDetails.languages || [
+                { name: 'Telugu', proficiency: 'Native' },
+                { name: 'English', proficiency: 'Fluent' },
+                { name: 'Hindi', proficiency: 'Intermediate' }
+            ],
+            
+            // IMPORTANT: Template expects 'experience' not 'workExperience'
+            experience: workExperienceData,
+            workExperience: workExperienceData,
+            
+            // Education - Fix field mapping: template expects 'institution' but data has 'institute'
+            education: education.map(edu => ({
+                ...edu.toObject(),
+                institution: edu.institute || edu.institution, // Map institute to institution for template
+                gpa: edu.grade, // Map grade to gpa for template
+            })),
+            
+            // Skills - Enhanced format with case-insensitive deduplication
+            skills: {
+                // All technical skills including project technologies (deduplicated)
+                technical: allTechnicalSkills,
+                // All skills grouped properly
+                all: enhancedSkills,
+                // Group by category
+                byCategory: groupSkillsByCategory(enhancedSkills)
+            },
+            skillsByCategory: groupSkillsByCategory(enhancedSkills),
+            
+            // Projects
             projects: projects,
+            
+            // Certifications
             certifications: certifications,
-            languages: languages,
-            socialProfiles: socialProfiles
+            
+            // Additional sections
+            onlineProfiles: allOnlineProfiles, // All online profiles instead of just one
+            workSamples: workSamples,
+            publications: publications,
+            presentations: presentations,
+            patents: patents,
+            
+            // Add summary at root level for template compatibility
+            summary: profileSummary.summary || careerProfiles[0]?.description || ''
         };
         
         console.log(`Successfully fetched resume data for user ${userId}`);
@@ -4014,28 +5255,50 @@ function groupSkillsByCategory(skills) {
     
     skills.forEach(skill => {
         const category = skill.category || "General"; // Default category if not specified
+        const skillName = skill.name || skill.skill || skill; // Handle different skill object structures
+        const cleanSkillName = skillName.toString().trim();
+        
         if (!grouped[category]) {
             grouped[category] = {
                 category: category,
-                skills: []
+                skills: [],
+                skillsSet: new Set() // Track unique skills in this category
             };
         }
-        grouped[category].skills.push(skill.name || skill.skill); // Use 'name' or 'skill' property
+        
+        // Only add if not already in this category (case insensitive)
+        const lowerSkillName = cleanSkillName.toLowerCase();
+        if (!grouped[category].skillsSet.has(lowerSkillName) && cleanSkillName.length > 0) {
+            grouped[category].skills.push(cleanSkillName);
+            grouped[category].skillsSet.add(lowerSkillName);
+        }
     });
     
-    return Object.values(grouped); // Convert the object of grouped skills into an array
+    // Convert to array format and remove the temporary Set
+    return Object.values(grouped).map(group => ({
+        category: group.category,
+        skills: group.skills
+    }));
 }
 
 // Place this function alongside getUserCompleteResumeData
 function populateTemplateWithUserData(templateHTML, userData, customizations = {}) {
     try {
         console.log("Populating template with user data...");
+        console.log("User data structure:", JSON.stringify(userData, null, 2));
+        console.log("Template HTML snippet:", templateHTML.substring(0, 500));
         
-        // Compile the template using Handlebars
-        const template = Handlebars.compile(templateHTML);
+        // Compile the template using Handlebars with runtime options to handle prototype access
+        const template = Handlebars.compile(templateHTML, {
+            allowProtoPropertiesByDefault: true,
+            allowProtoMethodsByDefault: true,
+            noEscape: false,
+            strict: false
+        });
         
         // Prepare the context object for Handlebars. This object will be accessible within your template.
-        const contextWithCustomizations = {
+        // Convert all data to plain objects to avoid prototype access issues
+        const contextWithCustomizations = JSON.parse(JSON.stringify({
             ...userData, // Spread all user data (personalInfo, workExperience, etc.)
             customizations: customizations, // Pass customizations object
             // Add computed fields that might be useful in the template
@@ -4043,25 +5306,240 @@ function populateTemplateWithUserData(templateHTML, userData, customizations = {
             currentYear: new Date().getFullYear(),
             // Add boolean flags for conditional rendering to simplify template logic
             hasWorkExperience: userData.workExperience && userData.workExperience.length > 0,
+            hasExperience: userData.experience && userData.experience.length > 0,
             hasEducation: userData.education && userData.education.length > 0,
-            hasSkills: userData.skills && userData.skills.length > 0,
+            hasSkills: userData.skills && (userData.skills.technical?.length > 0 || userData.skills.all?.length > 0),
             hasProjects: userData.projects && userData.projects.length > 0,
             hasCertifications: userData.certifications && userData.certifications.length > 0,
             hasLanguages: userData.languages && userData.languages.length > 0
-        };
+        }));
+        
+        console.log("Context for Handlebars:", JSON.stringify(contextWithCustomizations, null, 2));
         
         // Generate the populated HTML by rendering the template with the context
-        const populatedHTML = template(contextWithCustomizations);
+        const populatedHTML = template(contextWithCustomizations, {
+            allowProtoPropertiesByDefault: true,
+            allowProtoMethodsByDefault: true
+        });
+        
+        console.log("Populated HTML snippet:", populatedHTML.substring(0, 500));
+        
+        // CRITICAL: Normalize template CSS to prevent width issues
+        const normalizedHTML = normalizeTemplateCSS(populatedHTML);
         
         // Apply CSS customizations (color, font, layout) directly to the generated HTML
-        const finalHTML = applyCustomizationsToHTML(populatedHTML, customizations);
+        const finalHTML = applyCustomizationsToHTML(normalizedHTML, customizations);
         
         console.log("Template populated successfully");
         return finalHTML;
         
     } catch (error) {
         console.error("Error populating template with user data:", error);
+        console.error("Error stack:", error.stack);
         throw new Error(`Failed to populate template: ${error.message}`);
+    }
+}
+
+// Critical function to normalize template CSS and fix width consistency issues
+function normalizeTemplateCSS(html) {
+    try {
+        // Fix common width-related CSS patterns that cause inconsistency
+        let normalizedHTML = html;
+        
+        // Remove or modify problematic max-width and width constraints
+        normalizedHTML = normalizedHTML.replace(/max-width:\s*[0-9.]+in/gi, 'max-width: 100%');
+        normalizedHTML = normalizedHTML.replace(/width:\s*[0-9.]+in/gi, 'width: 100%');
+        normalizedHTML = normalizedHTML.replace(/max-width:\s*[0-9.]+px/gi, 'max-width: 100%');
+        
+        // Fix margin issues that can cause centering problems
+        normalizedHTML = normalizedHTML.replace(/margin:\s*[0-9.]+in\s+auto/gi, 'margin: 0 auto');
+        normalizedHTML = normalizedHTML.replace(/margin:\s*[0-9.]+in/gi, 'margin: 10px');
+        
+        // Fix padding that might cause overflow
+        normalizedHTML = normalizedHTML.replace(/padding:\s*[0-9.]+in/gi, 'padding: 15px');
+        normalizedHTML = normalizedHTML.replace(/padding:\s*[0-9.]+in\s+[0-9.]+in\s+[0-9.]+in\s+[0-9.]+in/gi, 'padding: 15px');
+        
+        // Override body styling that commonly causes issues (preserve existing styles when possible)
+        if (normalizedHTML.includes('<style>')) {
+            // Add body normalization without overriding existing styles completely
+            normalizedHTML = normalizedHTML.replace(
+                '</style>',
+                `
+                body {
+                    margin: 0;
+                    padding: 15px;
+                    max-width: 100%;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* Preserve sidebar styling for templates */
+                .sidebar, .left-section, .left-column, .resume-sidebar {
+                    background: inherit !important;
+                    color: inherit !important;
+                }
+                
+                /* Ensure sidebar text visibility */
+                .sidebar *, .left-section *, .left-column *, .resume-sidebar *,
+                .sidebar-section, .sidebar-heading, .sidebar-section *, .sidebar-heading *,
+                .sidebar-title, .sidebar-title * {
+                    color: inherit !important;
+                }
+                
+                /* Force preserve sidebar backgrounds for specific templates */
+                .sidebar {
+                    background: inherit !important;
+                    background-color: inherit !important;
+                    color: white !important;
+                }
+                
+                /* Template 1 sidebar - Blue gradient */
+                body .sidebar {
+                    background: linear-gradient(135deg, #4a5568, #2d3748) !important;
+                    color: white !important;
+                }
+                
+                /* Template 3 sidebar - Dark blue */
+                [class*="template3"] .sidebar,
+                .sidebar[style*="#2c3e50"] {
+                    background: #2c3e50 !important;
+                    color: white !important;
+                }
+                
+                /* Ensure all sidebar children maintain white text */
+                .sidebar, .sidebar * {
+                    color: white !important;
+                }
+                </style>`
+            );
+            
+            // Add or override image styling to ensure perfect circles
+            if (normalizedHTML.includes('</style>')) {
+                const imageCSS = `
+                /* Force all images to be perfect circles - Ultra high specificity */
+                img, 
+                img[src],
+                *:not(i) img,
+                div img,
+                section img,
+                body img,
+                html img {
+                    border-radius: 50% !important;
+                    object-fit: cover !important;
+                    display: block !important;
+                    border: none !important;
+                    outline: none !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+                    clip-path: circle(50% at 50% 50%) !important;
+                    background: transparent !important;
+                    background-color: transparent !important;
+                }
+                
+                /* Template 1 specific profile photo styling */
+                .profile-photo {
+                    width: 120px !important;
+                    height: 120px !important;
+                    border-radius: 50% !important;
+                    border: 4px solid white !important;
+                    margin: 0 auto 25px auto !important;
+                    display: block !important;
+                    position: relative !important;
+                    overflow: hidden !important;
+                }
+                
+                .profile-photo img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border-radius: 0 !important;
+                    border: none !important;
+                    object-fit: cover !important;
+                    object-position: center 35% !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    margin: 0 !important;
+                    clip-path: none !important;
+                    box-shadow: none !important;
+                }
+                
+                /* Fallback for other templates - reasonable default size */
+                img:not(.profile-photo img) {
+                    width: 100px !important;
+                    height: 100px !important;
+                    max-width: 100px !important;
+                    max-height: 100px !important;
+                    min-width: 100px !important;
+                    min-height: 100px !important;
+                    margin: 0 auto 15px !important;
+                }
+                
+                /* Remove any backgrounds from image containers */
+                img:before,
+                img:after {
+                    display: none !important;
+                    content: none !important;
+                }
+                
+                /* Target any parent elements that might have oval backgrounds - but preserve template-specific containers */
+                *:has(img):not(.sidebar):not(.sidebar *):not(.profile-photo):not(.profile-photo *),
+                div:has(img):not(.sidebar):not(.sidebar *):not(.profile-photo):not(.profile-photo *),
+                section:has(img):not(.sidebar):not(.sidebar *):not(.profile-photo):not(.profile-photo *),
+                .image-container:not(.sidebar):not(.sidebar *):not(.profile-photo):not(.profile-photo *),
+                .photo-container:not(.sidebar):not(.sidebar *):not(.profile-photo):not(.profile-photo *),
+                .profile-container:not(.sidebar):not(.sidebar *):not(.profile-photo):not(.profile-photo *) {
+                    background: transparent !important;
+                    background-color: transparent !important;
+                    border: none !important;
+                    outline: none !important;
+                    border-radius: 0 !important;
+                }
+                
+                /* Additional fallback selectors for common template patterns */
+                .profile-image,
+                .user-photo,
+                .avatar,
+                .photo,
+                [alt*="photo"],
+                [alt*="image"],
+                [src*="profile"],
+                [src*="avatar"] {
+                    width: 100px !important;
+                    height: 100px !important;
+                    border-radius: 50% !important;
+                    object-fit: cover !important;
+                    border: none !important;
+                    outline: none !important;
+                    clip-path: circle(50% at 50% 50%) !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+                    background: transparent !important;
+                    background-color: transparent !important;
+                }
+                
+                /* Remove any pseudo-elements that might create oval shapes, but preserve sidebar styling */
+                *:not(.sidebar):not(.sidebar *)::before,
+                *:not(.sidebar):not(.sidebar *)::after {
+                    background: transparent !important;
+                    border: none !important;
+                    outline: none !important;
+                }
+                `;
+                normalizedHTML = normalizedHTML.replace('</style>', `${imageCSS}</style>`);
+            }
+        }
+        
+        // Add viewport meta tag if missing
+        if (!normalizedHTML.includes('viewport')) {
+            normalizedHTML = normalizedHTML.replace(
+                '<head>',
+                '<head>\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+            );
+        }
+        
+        return normalizedHTML;
+        
+    } catch (error) {
+        console.error('Error normalizing template CSS:', error);
+        return html; // Return original if normalization fails
     }
 }
 
@@ -4114,6 +5592,7 @@ function getFontFamilyCSS(fontFamily) {
 
 // Place this API endpoint within your existing Express routes (e.g., after other GET routes)
 app.get("/api/users/:userId/resume-data", async (req, res) => {
+    console.log("=== ENDPOINT HIT ===");
     try {
         const { userId } = req.params;
         console.log(`Attempting to fetch resume data for user: ${userId}`);
@@ -4153,8 +5632,8 @@ app.post("/api/templates/:templateId/populate", async (req, res) => {
         
         console.log(`Attempting to populate template ${templateId} for user ${userId}`);
         
-        // Fetch the template from your database (assuming ResumeTemplate is your Mongoose model for templates)
-        const template = await ResumeTemplate.findById(templateId);
+        // Fetch the template from your database
+        const template = await Template.findById(templateId);
         if (!template) {
             return res.status(404).json({ 
                 success: false, 
@@ -4199,6 +5678,1116 @@ app.post("/api/templates/:templateId/populate", async (req, res) => {
         });
     }
 });
+
+// Add the missing /api/render-template endpoint
+app.post("/api/render-template", async (req, res) => {
+    try {
+        const { templateId, userId, customizations } = req.body;
+        
+        console.log(`Rendering template ${templateId} for user ${userId}`);
+        
+        // Validate required parameters
+        if (!templateId || !userId) {
+            return res.status(400).json({
+                success: false,
+                message: "Template ID and User ID are required"
+            });
+        }
+        
+        // Fetch the template from database
+        const template = await Template.findById(templateId);
+        if (!template) {
+            return res.status(404).json({
+                success: false,
+                message: "Template not found"
+            });
+        }
+        
+        console.log(`Found template: ${template.name} (ID: ${templateId})`);
+        
+        // Fetch user data
+        const userData = await getUserCompleteResumeData(userId);
+        if (!userData) {
+            return res.status(404).json({
+                success: false,
+                message: "User data not found"
+            });
+        }
+        
+        console.log(`User data fetched for ${userData.personalInfo?.firstName || 'Unknown'} ${userData.personalInfo?.lastName || 'User'}`);
+        
+        // Add sample data for testing if fields are empty
+        if (!userData.personalInfo.firstName) {
+            userData.personalInfo.firstName = "John";
+            userData.personalInfo.lastName = "Doe";
+            userData.personalInfo.email = "john.doe@example.com";
+            userData.personalInfo.phone = "+1 (555) 123-4567";
+            userData.contactInfo.email = "john.doe@example.com";
+            userData.contactInfo.phone = "+1 (555) 123-4567";
+            userData.contactInfo.city = "New York";
+            userData.contactInfo.state = "NY";
+            console.log("Added sample data for testing");
+        }
+        
+        // Populate template with user data
+        const populatedHTML = populateTemplateWithUserData(
+            template.htmlContent,
+            userData,
+            customizations || {}
+        );
+        
+        res.json({
+            success: true,
+            html: populatedHTML,  // For the newer code that expects "html"
+            data: {
+                templateId,
+                templateName: template.name,
+                renderedHtml: populatedHTML,  // For the older code that expects "renderedHtml"
+                populatedHTML,
+                userData,
+                customizations: customizations || {}
+            }
+        });
+        
+    } catch (error) {
+        console.error("Error rendering template:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to render template",
+            error: error.message
+        });
+    }
+});
+
+// Add the missing endpoint for /api/user/:userId/template/:templateId
+app.get("/api/user/:userId/template/:templateId", async (req, res) => {
+    try {
+        const { userId, templateId } = req.params;
+        console.log(`Rendering template ${templateId} for user ${userId}`);
+        
+        // Fetch the template from database
+        const template = await Template.findById(templateId);
+        if (!template) {
+            return res.status(404).json({
+                success: false,
+                message: "Template not found"
+            });
+        }
+        
+        // Fetch user data
+        const userData = await getUserCompleteResumeData(userId);
+        if (!userData) {
+            return res.status(404).json({
+                success: false,
+                message: "User data not found"
+            });
+        }
+        
+        // Populate template with user data
+        const populatedHTML = populateTemplateWithUserData(template.htmlContent, userData);
+        
+        // Return the populated template
+        res.json({
+            success: true,
+            data: {
+                templateId: template._id,
+                templateName: template.name,
+                userId: userId,
+                populatedHTML: populatedHTML,
+                userData: userData
+            }
+        });
+        
+    } catch (error) {
+        console.error("Error rendering template:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to render template",
+            error: error.message
+        });
+    }
+});
+
+// DELETE /api/user-templates/:userId/:templateId - Delete a user template
+app.delete('/api/user-templates/:userId/:templateId', async (req, res) => {
+    try {
+        const { userId, templateId } = req.params;
+
+        const template = await UserTemplate.findOne({
+            _id: templateId,
+            userId: userId
+        });
+
+        if (!template) {
+            return res.status(404).json({ message: 'Template not found' });
+        }
+
+        await UserTemplate.deleteOne({ _id: templateId, userId: userId });
+
+        res.json({ 
+            success: true, 
+            message: 'Template deleted successfully' 
+        });
+
+    } catch (error) {
+        console.error('Error deleting user template:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// POST /api/user-templates/:userId/:templateId/share - Generate share link
+app.post('/api/user-templates/:userId/:templateId/share', async (req, res) => {
+    try {
+        const { userId, templateId } = req.params;
+
+        const template = await UserTemplate.findOne({
+            _id: templateId,
+            userId: userId
+        });
+
+        if (!template) {
+            return res.status(404).json({ message: 'Template not found' });
+        }
+
+        // Generate unique share ID
+        const shareId = crypto.randomBytes(16).toString('hex');
+        
+        // Update template with share info
+        template.shareId = shareId;
+        template.isPublic = true;
+        template.sharedAt = new Date();
+        await template.save();
+
+        const shareLink = `${req.protocol}://${req.get('host')}/share/${shareId}`;
+
+        res.json({ 
+            success: true, 
+            shareLink: shareLink,
+            shareId: shareId
+        });
+
+    } catch (error) {
+        console.error('Error generating share link:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// DELETE /api/user-templates/:userId/:templateId/share - Deactivate share link
+app.delete('/api/user-templates/:userId/:templateId/share', async (req, res) => {
+    try {
+        const { userId, templateId } = req.params;
+
+        const template = await UserTemplate.findOne({
+            _id: templateId,
+            userId: userId
+        });
+
+        if (!template) {
+            return res.status(404).json({ message: 'Template not found' });
+        }
+
+        // Deactivate sharing
+        template.shareId = undefined;
+        template.isPublic = false;
+        template.sharedAt = undefined;
+        await template.save();
+
+        res.json({ 
+            success: true, 
+            message: 'Share link deactivated successfully' 
+        });
+
+    } catch (error) {
+        console.error('Error deactivating share link:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Test share link creation for debugging
+app.get('/test-share-creation', async (req, res) => {
+    try {
+        // Get the first template from database for testing
+        const testTemplate = await UserTemplate.findOne({});
+        
+        if (!testTemplate) {
+            return res.json({ message: "No templates found in database for testing" });
+        }
+
+        // Generate a test share ID
+        const shareId = crypto.randomBytes(16).toString('hex');
+        
+        // Update template with share info
+        testTemplate.shareId = shareId;
+        testTemplate.isPublic = true;
+        testTemplate.sharedAt = new Date();
+        await testTemplate.save();
+
+        const shareLink = `${req.protocol}://${req.get('host')}/share/${shareId}`;
+
+        res.json({ 
+            success: true, 
+            message: "Test share link created!",
+            shareLink: shareLink,
+            shareId: shareId,
+            templateName: testTemplate.name,
+            userId: testTemplate.userId
+        });
+
+    } catch (error) {
+        console.error('Error creating test share link:', error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+});
+
+// Test promotional page route
+app.get('/test-promo', (req, res) => {
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextHire - Professional Resume Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #0f1c3f 0%, #311b4f 25%, #6b247f 50%, #c03bce 75%, #f356ff 100%);
+            min-height: 100vh;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+        
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero-section p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-button {
+            background: #f356ff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            background: #c03bce;
+            transform: translateY(-2px);
+        }
+        
+        .test-message {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 40px 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <h1>🎯 TEST: NextHire Promotional Page</h1>
+        <p>This is a test page to verify that our promotional content is rendering correctly with the dashboard color scheme.</p>
+        <a href="/dashboard.html" class="cta-button">Go to Dashboard</a>
+    </div>
+    
+    <div class="test-message">
+        <h3>✅ Promotional Content Test</h3>
+        <p>If you can see this styled page with the purple-pink gradient background, the promotional content system is working correctly!</p>
+    </div>
+</body>
+</html>
+    `);
+});
+
+// Test route to create a sample share link without database
+app.get('/create-test-share', (req, res) => {
+    const testShareId = 'test-share-demo-12345';
+    const shareLink = `${req.protocol}://${req.get('host')}/share/${testShareId}`;
+    
+    res.json({
+        success: true,
+        message: 'Test share link created',
+        shareLink: shareLink,
+        shareId: testShareId,
+        note: 'This is a demo link that works without database'
+    });
+});
+
+// GET /share/:shareId - Public share page
+app.get('/share/:shareId', async (req, res) => {
+    try {
+        const { shareId } = req.params;
+        console.log('🔗 [SHARE] Requested shareId:', shareId);
+
+        // Check if this is a test/demo share ID
+        if (shareId === 'test-share-demo-12345') {
+            console.log('🎯 [SHARE] Serving demo share page');
+            return res.send(getDemoSharePageHTML());
+        }
+
+        let template = null;
+        try {
+            template = await UserTemplate.findOne({
+                shareId: shareId,
+                isPublic: true
+            });
+        } catch (dbError) {
+            console.log('⚠️ [SHARE] Database error, serving demo content:', dbError.message);
+            return res.send(getDemoSharePageHTML());
+        }
+
+        if (!template) {
+            console.log('❌ [SHARE] No template found for shareId:', shareId);
+            return res.status(404).send(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Resume Not Found</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            text-align: center; 
+                            padding: 50px;
+                            background: linear-gradient(135deg, #0f1c3f 0%, #311b4f 25%, #6b247f 50%, #c03bce 75%, #f356ff 100%);
+                            color: white;
+                            min-height: 100vh;
+                            margin: 0;
+                        }
+                        .error { color: #ff6b6b; }
+                        .demo-link { 
+                            display: inline-block; 
+                            margin-top: 20px; 
+                            padding: 10px 20px; 
+                            background: #f356ff; 
+                            color: white; 
+                            text-decoration: none; 
+                            border-radius: 5px; 
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1 class="error">Resume Not Found</h1>
+                    <p>This resume is no longer available or the link has expired.</p>
+                    <p>Try this demo link instead:</p>
+                    <a href="/share/test-share-demo-12345" class="demo-link">View Demo Resume</a>
+                </body>
+                </html>
+            `);
+        }
+
+        console.log('✅ [SHARE] Template found for shareId:', shareId, 'Template name:', template.name);
+        console.log('🎯 [SHARE] Serving promotional page with resume content');
+
+        // Get user data to populate the template
+        const userData = await getUserCompleteResumeData(template.userId);
+        if (!userData) {
+            console.log('❌ [SHARE] No user data found for userId:', template.userId);
+        }
+
+        let populatedHTML = template.htmlContent;
+        if (userData) {
+            populatedHTML = populateTemplateWithUserData(template.htmlContent, userData);
+        }
+
+        // Apply CSS normalization to ensure consistent styling and circular images
+        populatedHTML = normalizeTemplateCSS(populatedHTML);
+
+        // Serve the complete promotional page with resume content
+const sharePageHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${template.name} - Professional Resume | NextHire</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #0f1c3f 0%, #311b4f 25%, #6b247f 50%, #c03bce 75%, #f356ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Header Section - Brand, Quote, CTA */
+        .header-section {
+            background: linear-gradient(135deg, #0f1c3f 0%, #311b4f 50%, #6b247f 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            color: #f356ff;
+            font-size: 3rem;
+        }
+
+        .logo-text {
+            background: linear-gradient(45deg, #f356ff, #c03bce);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .quote {
+            font-style: italic;
+            font-size: 1.3rem;
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            border-left: 5px solid #f356ff;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #f356ff, #c03bce);
+            color: white;
+            padding: 18px 35px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(243, 86, 255, 0.4);
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(243, 86, 255, 0.5);
+        }
+
+        .cta-button i {
+            margin-right: 8px;
+        }
+
+        /* Resume Section */
+        .resume-section {
+            padding: 50px 30px;
+            background: #f8f9fa;
+        }
+
+        .resume-title {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 40px;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+
+        .resume-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            border: 1px solid #e9ecef;
+            width: 100%;
+            overflow: visible;
+            position: relative;
+        }
+
+        /* CRITICAL: Template Override Styles - Force consistent width */
+        .resume-content {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #333;
+            width: 100%;
+            overflow: visible;
+            word-wrap: break-word;
+            hyphens: auto;
+            position: relative;
+            /* Force override of any template CSS */
+            transform: scale(1);
+            transform-origin: top left;
+        }
+
+        /* Override any inline styles or template-specific constraints */
+        .resume-content[style],
+        .resume-content *[style] {
+            max-width: 100% !important;
+            width: auto !important;
+        }
+
+        /* Force all nested elements to respect container width */
+        .resume-content > *,
+        .resume-content > * > *,
+        .resume-content > * > * > * {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Specific overrides for common template patterns */
+        .resume-content .template-container,
+        .resume-content .document,
+        .resume-content .page,
+        .resume-content .resume-wrapper {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .resume-content h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #6b247f;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .resume-content h2 {
+            font-size: 1.3rem;
+            color: #6b247f;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .resume-content h3 {
+            color: #2c3e50;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .resume-content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .resume-content p {
+            margin-bottom: 10px;
+        }
+
+        .resume-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .resume-content td, .resume-content th {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            word-wrap: break-word;
+        }
+
+        .resume-content .section {
+            margin-bottom: 20px;
+        }
+
+        .resume-content .header-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .resume-content .contact-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .resume-content .contact-info span {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Ensure all resume template content is properly contained */
+        .resume-content * {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Override any template-specific width constraints */
+        .resume-content html {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .resume-content body {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            background: transparent !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+        }
+
+        /* Reset any template containers that might have fixed widths */
+        .resume-content div,
+        .resume-content section,
+        .resume-content article,
+        .resume-content main {
+            max-width: 100% !important;
+            width: auto !important;
+        }
+
+        .resume-content img {
+            width: 100px !important;
+            height: 100px !important;
+            max-width: 100px !important;
+            max-height: 100px !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+            display: block !important;
+            margin: 0 auto 15px !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            clip-path: circle(50% at 50% 50%) !important;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+
+        /* Remove any parent container backgrounds that might create oval shapes */
+        .resume-content *:has(img),
+        .resume-content div:has(img),
+        .resume-content section:has(img),
+        .resume-content .image-container,
+        .resume-content .photo-container,
+        .resume-content .profile-container {
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            outline: none !important;
+            border-radius: 0 !important;
+        }
+
+        /* Remove pseudo-elements that might create shapes */
+        .resume-content *::before,
+        .resume-content *::after {
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            content: none !important;
+            display: none !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .main-container {
+                border-radius: 10px;
+                margin: 0 5px;
+            }
+            
+            .header-section {
+                padding: 40px 20px;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .logo i {
+                font-size: 2.5rem;
+            }
+            
+            .quote {
+                font-size: 1.1rem;
+                padding: 20px;
+            }
+            
+            .cta-button {
+                padding: 15px 30px;
+                font-size: 1.1rem;
+            }
+            
+            .resume-section {
+                padding: 40px 15px;
+            }
+            
+            .resume-title {
+                font-size: 1.8rem;
+            }
+            
+            .resume-container {
+                padding: 20px;
+                max-width: 100%;
+                margin: 0;
+            }
+            
+            .resume-content {
+                font-size: 13px;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-section {
+                padding: 30px 15px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .logo i {
+                font-size: 2rem;
+            }
+            
+            .quote {
+                font-size: 1rem;
+                padding: 15px;
+            }
+            
+            .resume-container {
+                padding: 15px;
+                border-radius: 5px;
+            }
+            
+            .resume-content {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header Section: Brand Logo, Quote, CTA Button -->
+        <section class="header-section">
+            <div class="logo">
+                <i class="fas fa-apple-alt"></i>
+                <span class="logo-text">NextHire</span>
+            </div>
+            
+            <div class="quote">
+                "Transform your career with professional resumes that get noticed by employers and land interviews."
+            </div>
+            
+            <a href="http://localhost:3000/#signup" class="cta-button" onclick="window.open('http://localhost:3000', '_blank'); return false;">
+                <i class="fas fa-rocket"></i> Create Your Resume Now - FREE!
+            </a>
+        </section>
+        
+        <!-- Resume Preview Section -->
+        <section class="resume-section">
+            <h2 class="resume-title">Your Professional Resume</h2>
+            <div class="resume-container">
+                <div class="resume-content">
+                    ${populatedHTML}
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        // Handle navigation to home page with signup modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctaButton = document.querySelector('.cta-button');
+            if (ctaButton) {
+                ctaButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Open home page in new tab and focus on signup
+                    const homeUrl = 'http://localhost:3000';
+                    const newWindow = window.open(homeUrl, '_blank');
+                    
+                    // If opening in same tab is preferred, uncomment below and comment above
+                    // window.location.href = homeUrl;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+`;
+
+
+
+        res.send(sharePageHTML);
+
+    } catch (error) {
+        console.error('❌ [SHARE] Error serving shared resume:', error);
+        res.status(500).send('Internal server error');
+    }
+});
+
+// Function to generate demo share page HTML
+function getDemoSharePageHTML() {
+    const demoResumeHTML = `
+        <div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="/images/logo.jpg" alt="Profile" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;">
+                <h1 style="margin: 0; color: #2c3e50;">John Doe</h1>
+                <h3 style="margin: 5px 0; color: #7f8c8d;">Software Developer</h3>
+                <p style="margin: 5px 0; color: #95a5a6;">john.doe@email.com | +1 (555) 123-4567 | LinkedIn: /in/johndoe</p>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h2 style="border-bottom: 2px solid #f356ff; padding-bottom: 5px; color: #2c3e50;">Professional Summary</h2>
+                <p style="line-height: 1.6;">Experienced software developer with 5+ years in full-stack development. Skilled in JavaScript, React, Node.js, and cloud technologies. Passionate about creating efficient, scalable solutions.</p>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h2 style="border-bottom: 2px solid #f356ff; padding-bottom: 5px; color: #2c3e50;">Work Experience</h2>
+                <div style="margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #2c3e50;">Senior Software Developer</h3>
+                    <p style="margin: 2px 0; color: #7f8c8d; font-style: italic;">Tech Solutions Inc. | 2021 - Present</p>
+                    <ul style="margin: 8px 0;">
+                        <li>Led development of web applications serving 10K+ users</li>
+                        <li>Reduced application load time by 40% through optimization</li>
+                        <li>Mentored junior developers and conducted code reviews</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h2 style="border-bottom: 2px solid #f356ff; padding-bottom: 5px; color: #2c3e50;">Education</h2>
+                <div>
+                    <h3 style="margin: 0; color: #2c3e50;">Bachelor of Science in Computer Science</h3>
+                    <p style="margin: 2px 0; color: #7f8c8d; font-style: italic;">University of Technology | 2015 - 2019</p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h2 style="border-bottom: 2px solid #f356ff; padding-bottom: 5px; color: #2c3e50;">Skills</h2>
+                <p style="line-height: 1.6;">JavaScript, React, Node.js, Python, SQL, MongoDB, AWS, Docker, Git, Agile Development</p>
+            </div>
+        </div>
+    `;
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Resume - Professional Resume | NextHire</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #0f1c3f 0%, #311b4f 25%, #6b247f 50%, #c03bce 75%, #f356ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .main-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header-section {
+            background: linear-gradient(135deg, #0f1c3f 0%, #311b4f 50%, #6b247f 100%);
+            color: white;
+            padding: 50px 30px 30px 30px;
+            text-align: center;
+        }
+        .promo-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+        .promo-brand {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #f356ff;
+            margin-bottom: 8px;
+        }
+        .promo-quote {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+        .promo-signup-btn {
+            display: inline-block;
+            margin: 18px 0 32px 0;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            background: linear-gradient(90deg, #ff00cc, #333399);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .promo-signup-btn:hover {
+            background: linear-gradient(90deg, #311b4f, #f356ff);
+        }
+        .promo-heading {
+            font-size: 1.5rem;
+            margin: 32px 0 18px 0;
+            color: #f356ff;
+            font-weight: 600;
+        }
+        .promo-resume {
+            background: #fff;
+            color: #222;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 32px 24px;
+            margin-top: 10px;
+            text-align: left;
+        }
+        .demo-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <section class="header-section">
+            <img src="/images/logo.jpg" alt="NextHire Logo" class="promo-logo">
+            <div class="promo-brand">NextHire <span class="demo-badge">DEMO</span></div>
+            <div class="promo-quote">Empower your career journey. Create, share, and inspire with NextHire resumes!</div>
+            <a href="/" class="promo-signup-btn">Sign Up &amp; Start Building Your Resume</a>
+            <div class="promo-heading">View My Resume Generated Through NextHire</div>
+        </section>
+        <section class="promo-resume">
+            ${demoResumeHTML}
+        </section>
+    </div>
+</body>
+</html>
+    `;
+}
+
+// POST /api/user-templates/:userId/:templateId/download - Update download count
+app.post('/api/user-templates/:userId/:templateId/download', async (req, res) => {
+    try {
+        const { userId, templateId } = req.params;
+
+        await UserTemplate.updateOne(
+            { _id: templateId, userId: userId },
+            { $inc: { downloads: 1 } }
+        );
+
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error('Error updating download count:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Public resume endpoint - allows viewing shared resumes
+app.get("/api/public-resume/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        console.log(`Fetching public resume for user: ${userId}`);
+        
+        // Get the user data to populate the resume
+        const userData = await getUserCompleteResumeData(userId);
+        
+        if (!userData) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Resume data not available for this user' 
+            });
+        }
+        
+        console.log('Successfully fetched user data for public sharing');
+        
+        // Return the resume data for public viewing
+        res.json({
+            success: true,
+            resume: userData
+        });
+        
+    } catch (error) {
+        console.error('Error fetching public resume:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Internal server error' 
+        });
+    }
+});
+
 // Start the server
 app.listen(port, '0.0.0.0', (req,res) => {
     console.log(`Server is running on port ${port}`);

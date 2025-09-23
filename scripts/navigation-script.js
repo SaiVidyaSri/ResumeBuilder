@@ -25,13 +25,13 @@ function initProfileToggle() {
     if (profileIcon && profileDropdown) {
         profileIcon.addEventListener('click', function(e) {
             e.stopPropagation();
-            profileDropdown.classList.toggle('active');
+            profileDropdown.classList.toggle('show');
         });
         
         // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            if (profileDropdown.classList.contains('active') && !profileDropdown.contains(e.target)) {
-                profileDropdown.classList.remove('active');
+            if (profileDropdown.classList.contains('show') && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('show');
             }
         });
     }

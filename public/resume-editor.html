@@ -32,7 +32,7 @@
                     <div class="profile-dropdown" id="profileDropdown">
                         <a href="profile.html" class="dropdown-item">My profile</a>
                         <a href="favorites.html" class="dropdown-item">Saved Templates</a>
-                        <a href="profile.html" class="dropdown-item">Account Settings</a>
+                        <a href="profile.html" class="dropdown-item">Privacy and Security</a>
                         <a href="logout.html" class="dropdown-item">Logout</a>
                     </div>
                 </div>
@@ -87,48 +87,101 @@
 
                 <!-- Main Editor Content -->
                 <div class="editor-content">
-                    <!-- User Profile Section -->
-                    <section class="profile-section">
-                        <div class="profile-header">
-                            <div class="profile-avatar">
-                                <div class="avatar-container">
-                                    <div class="avatar-placeholder">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="completion-indicator">
-                                        <svg viewBox="0 0 36 36">
-                                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                            <path class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                            <text x="18" y="20.35" class="percentage">0%</text>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="profile-info">
-                                <h2 class="profile-name" contenteditable="true">SAI VIDYA SRI DONTHAGANI</h2>
-                                <p class="profile-meta">Profile last updated - 19May, 2025</p>
-                                <div class="profile-contact">
-                                    <div class="contact-item">
-                                        <i class="fas fa-envelope"></i>
-                                        <span>vidyadonthagani@gmail.com</span>
-                                    </div>
-                                    <div class="contact-item">
-                                        <i class="fas fa-phone"></i>
-                                        <span>9347502589</span>
-                                    </div>
-                                    <div class="contact-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span>Tenali, Andhra Pradesh</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="edit-profile-btn">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>
+        <!-- User Profile Section -->
+        <section class="profile-card">
+            <div class="profile-avatar-large">
+                <div class="avatar-container">
+                    <!-- Progress circle around avatar -->
+                    <div class="progress-circle">
+                        <svg class="progress-ring" width="120" height="120">
+                            <circle class="progress-ring-background" cx="60" cy="60" r="50"></circle>
+                            <circle class="progress-ring-progress" cx="60" cy="60" r="50" id="progressCircle"></circle>
+                        </svg>
+                        <div class="avatar-placeholder" id="avatarPlaceholder">
+                            <img id="profileAvatar" src="/images/default-avatar.png" alt="Profile Avatar" style="display: none;"> <!-- Initially hidden -->
+                            <i class="fas fa-user" id="defaultAvatarIcon"></i> <!-- Default icon -->
                         </div>
-                    </section>
+                    </div>
+                </div>
+                <!-- Progress percentage below avatar -->
+                <div class="progress-info">
+                    <span class="progress-percentage" id="progressPercentage">0%</span>
+                    <span class="progress-label">Profile Complete</span>
+                </div>
+            </div>
+            <div class="profile-details">
+                <h2 class="profile-name" id="profileName">Add your name</h2>
+                <div class="side">
+                <p class="profile-meta" id="profileEmail"></p>
+                <p class="profile-meta" id="profileLocation">Add your location</p>
+                <p class="profile-meta" id="profileMobile">Add your mobile number</p>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="resumeCount">0</span>
+                        <span class="stat-label">Resumes</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="downloadCount">0</span>
+                        <span class="stat-label">Downloads</span>
+                    </div>
+                </div>
+                <button class="edit-profile-btn" id="editProfileBtn">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            </div>
+        </section>
 
-          h          <!-- Resume Sections -->
+        <!-- Profile Edit Modal -->
+        <div class="profile-edit-modal" id="profileEditModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Profile</h3>
+                    <button class="close-btn" id="closeModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileEditForm" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="editProfilePicture">Profile Picture:</label>
+                            <input type="file" id="editProfilePicture" accept="image/*">
+                            <img id="profilePicturePreview" src="" alt="Profile Preview" style="max-width: 100px; max-height: 100px; margin-top: 10px; display: none;">
+                        </div>
+                        <div class="form-group">
+                            <label for="editFirstName">First Name:</label>
+                            <input type="text" id="editFirstName" placeholder="Enter your first name">
+                        </div>
+                        <div class="form-group">
+                            <label for="editLastName">Last Name:</label>
+                            <input type="text" id="editLastName" placeholder="Enter your last name">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMobileNumber">Mobile Number:</label>
+                            <input type="tel" id="editMobileNumber" placeholder="Enter your mobile number">
+                        </div>
+                        <div class="form-group">
+                            <label for="editLocation">Location:</label>
+                            <input type="text" id="editLocation" placeholder="Enter your location">
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmail">Email:</label>
+                            <input type="email" id="editEmail" placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBio">Bio:</label>
+                            <textarea id="editBio" placeholder="Tell us about yourself" rows="3"></textarea>
+                        </div>
+                        <!-- Add other fields as needed -->
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-btn" id="cancelEditBtn">Cancel</button>
+                    <button class="save-btn" id="saveProfileBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+
+                    <!-- Resume Sections -->
                     <section id="resume-headline" class="resume-section">
                         <div class="section-header">
                             <h2>Resume Headline <button class="edit-section-btn"><i class="fas fa-pencil-alt"></i></button></h2>

@@ -297,9 +297,7 @@
         flex: 1;
     }
 }
-.profile-dropdown{
-    width:200px;
-}
+
 .modal {
     display: none; 
     position: fixed; 

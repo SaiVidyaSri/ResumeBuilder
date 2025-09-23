@@ -990,3 +990,19 @@ background: linear-gradient(90deg, #ff00cc, #333399);
         transform: translateY(0);
     }
 }
+
+/* Simple Footer Styles */
+.simple-footer {
+    background: rgba(49, 27, 79, 0.9);
+    color: var(--text-color);
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.simple-footer p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.8;
+}
