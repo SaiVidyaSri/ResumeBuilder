@@ -42,18 +42,29 @@ app.use(cors({
 }));
 
 // MongoDB connection using environment variable
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/resume')
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/resume';
+console.log("🔗 Attempting to connect to MongoDB...");
+
+mongoose.connect(mongoUri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+  socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+})
   .then(() => {
-    console.log("✅ MongoDB connected to database:", mongoose.connection.db.databaseName);
+    console.log("✅ MongoDB connected successfully to:", mongoose.connection.db?.databaseName || 'database');
     
-    mongoose.connection.db.collection('resumeheadlines').countDocuments({})
-      .then(count => console.log(`Current resume headlines count: ${count}`))
-      .catch(err => console.error("Count error:", err));
+    // Only try to count if connection is ready
+    if (mongoose.connection.readyState === 1) {
+      mongoose.connection.db.collection('resumeheadlines').countDocuments({})
+        .then(count => console.log(`Current resume headlines count: ${count}`))
+        .catch(err => console.log("Count check skipped:", err.message));
+    }
   })
   .catch(err => {
-    console.error("❌ MongoDB connection error:", err);
-    console.log("⚠️ Continuing without database connection for testing...");
-    // Don't exit, continue running for testing purposes
+    console.error("❌ MongoDB connection error:", err.message);
+    console.log("⚠️ Continuing without database connection...");
+    // Don't exit, continue running for basic functionality
   });
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "hirewithnexthire@gmail.com"; 
@@ -145,31 +156,57 @@ app.get('/reset-password', (req, res) => {
 
 // Authentication Routes
 router.post('/send-otp', async (req, res) => {
-  const { email } = req.body;
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); 
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
 
-  let user = await User.findOne({ email });
-  if (!user) user = new User({ email });
-  user.otp = otp;
-  user.otpExpires = otpExpires;
-  await user.save();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); 
 
-const transporter = nodemailer.createTransport({ 
+    let user = await User.findOne({ email });
+    if (!user) user = new User({ email });
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',      
-    pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'         
-  }
- });
-  await transporter.sendMail({
-    from: '"NextHire"<hirewithnexthire@gmail.com>',
-    to: email,
-    subject: 'Your OTP Code',
-    text: `Your OTP is: ${otp}`
-  });
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
+        pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
+      },
+      connectionTimeout: 60000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
+      pool: true,
+      maxConnections: 1,
+      maxMessages: 3
+    });
 
-  res.json({ message: 'OTP sent to email' });
+    await transporter.sendMail({
+      from: '"NextHire"<hirewithnexthire@gmail.com>',
+      to: email,
+      subject: 'Your OTP Code',
+      text: `Your OTP is: ${otp}`
+    });
+
+    console.log(`OTP sent successfully to ${email}`);
+    res.json({ success: true, message: 'OTP sent to email' });
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to send OTP. Please try again.',
+      error: error.message 
+    });
+  }
 });
 
 router.post('/verify-otp', async (req, res) => {
@@ -203,10 +240,19 @@ router.post('/set-password', async (req, res) => {
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
       user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
       pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
-    }
+    },
+    connectionTimeout: 60000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 3
   });
 
   const htmlBody = `
@@ -261,10 +307,19 @@ router.post('/forgot-password', async (req, res) => {
         
         const transporter = nodemailer.createTransport({
             service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
             auth: {
                 user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
                 pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
-            }
+            },
+            connectionTimeout: 60000,
+            greetingTimeout: 30000,
+            socketTimeout: 60000,
+            pool: true,
+            maxConnections: 1,
+            maxMessages: 3
         });
         
         const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
@@ -344,10 +399,19 @@ router.post('/reset-password', async (req, res) => {
         
         const transporter = nodemailer.createTransport({
             service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
             auth: {
                 user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
                 pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
-            }
+            },
+            connectionTimeout: 60000,
+            greetingTimeout: 30000,
+            socketTimeout: 60000,
+            pool: true,
+            maxConnections: 1,
+            maxMessages: 3
         });
         
         await transporter.sendMail({
