@@ -87,6 +87,65 @@ app.get('/api/test-connection', (req, res) => {
     res.json({ success: true, message: 'Server is connected' });
 });
 
+// Test email connectivity endpoint
+app.get('/api/test-email', async (req, res) => {
+    try {
+        const emailConfigs = [
+            {
+                name: 'Gmail-587',
+                service: 'gmail',
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
+                    pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
+                }
+            },
+            {
+                name: 'Gmail-465',
+                service: 'gmail',
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
+                    pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
+                }
+            }
+        ];
+
+        const results = [];
+        
+        for (const config of emailConfigs) {
+            try {
+                const transporter = nodemailer.createTransporter(config);
+                await transporter.verify();
+                results.push({ config: config.name, status: 'success', message: 'Connection verified' });
+            } catch (error) {
+                results.push({ config: config.name, status: 'failed', error: error.message });
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Email connectivity test completed',
+            results: results,
+            environment: {
+                NODE_ENV: process.env.NODE_ENV,
+                EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
+                EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'NOT SET'
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            message: 'Email test failed', 
+            error: error.message 
+        });
+    }
+});
+
 // Static file routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname,'public' ,'index.html'));
@@ -154,6 +213,59 @@ app.get('/reset-password', (req, res) => {
     `);
 });
 
+// Create email transporter with fallback options
+function createEmailTransporter() {
+  // Try multiple SMTP configurations
+  const configs = [
+    // Gmail SMTP (primary)
+    {
+      name: 'Gmail',
+      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
+        pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
+      },
+      connectionTimeout: 30000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000
+    },
+    // Gmail SMTP on different port (fallback 1)
+    {
+      name: 'Gmail-465',
+      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
+        pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
+      },
+      connectionTimeout: 30000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000
+    },
+    // Ethereal Email (fallback 2 - for testing)
+    {
+      name: 'Ethereal',
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'ethereal.user@ethereal.email',
+        pass: 'ethereal.pass'
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
+    }
+  ];
+
+  return configs;
+}
+
 // Authentication Routes
 router.post('/send-otp', async (req, res) => {
   try {
@@ -172,32 +284,74 @@ router.post('/send-otp', async (req, res) => {
     user.otpExpires = otpExpires;
     await user.save();
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
-        pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
-      },
-      connectionTimeout: 60000,
-      greetingTimeout: 30000,
-      socketTimeout: 60000,
-      pool: true,
-      maxConnections: 1,
-      maxMessages: 3
-    });
+    // Try different email configurations
+    const emailConfigs = createEmailTransporter();
+    let emailSent = false;
+    let lastError = null;
 
-    await transporter.sendMail({
-      from: '"NextHire"<hirewithnexthire@gmail.com>',
-      to: email,
-      subject: 'Your OTP Code',
-      text: `Your OTP is: ${otp}`
-    });
+    for (const config of emailConfigs) {
+      try {
+        console.log(`Trying ${config.name} SMTP...`);
+        
+        const transporter = nodemailer.createTransporter(config);
+        
+        // Test the connection first
+        await transporter.verify();
+        console.log(`${config.name} SMTP connection verified`);
 
-    console.log(`OTP sent successfully to ${email}`);
-    res.json({ success: true, message: 'OTP sent to email' });
+        await transporter.sendMail({
+          from: `"NextHire" <${config.auth.user}>`,
+          to: email,
+          subject: 'Your OTP Code - NextHire',
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+              <h2 style="color: #007BFF;">Your OTP Code</h2>
+              <p>Hello,</p>
+              <p>Your One-Time Password (OTP) for NextHire is:</p>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                <h1 style="color: #007BFF; margin: 0; font-size: 32px; letter-spacing: 5px;">${otp}</h1>
+              </div>
+              <p>This OTP will expire in 10 minutes.</p>
+              <p>If you didn't request this, please ignore this email.</p>
+              <br>
+              <p>Best regards,<br>NextHire Team</p>
+            </div>
+          `,
+          text: `Your NextHire OTP is: ${otp}. This OTP will expire in 10 minutes.`
+        });
+
+        console.log(`OTP sent successfully via ${config.name} to ${email}`);
+        emailSent = true;
+        break;
+
+      } catch (error) {
+        console.error(`${config.name} SMTP failed:`, error.message);
+        lastError = error;
+        continue;
+      }
+    }
+
+    if (emailSent) {
+      res.json({ success: true, message: 'OTP sent to email successfully' });
+    } else {
+      console.error('All email configurations failed. Last error:', lastError);
+      
+      // For development/testing - still save OTP but inform user
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`DEV MODE: OTP for ${email} is: ${otp}`);
+        res.json({ 
+          success: true, 
+          message: 'OTP generated (check server logs in development mode)',
+          devOtp: otp 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false,
+          message: 'Unable to send OTP email. Please try again later or contact support.',
+          error: 'Email service temporarily unavailable'
+        });
+      }
+    }
 
   } catch (error) {
     console.error('Send OTP error:', error);
@@ -210,23 +364,38 @@ router.post('/send-otp', async (req, res) => {
 });
 
 router.post('/verify-otp', async (req, res) => {
-  const { email, otp } = req.body;
-  const user = await User.findOne({ email });
-  console.log('User OTP:', user.otp, 'Input OTP:', otp);
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+    console.log('User OTP:', user?.otp, 'Input OTP:', otp);
 
-  if (!user) return res.status(400).json({ message: 'User not found' });
+    if (!user) return res.status(400).json({ message: 'User not found' });
 
-  if ((user.otp || '').trim() !== (otp || '').trim()) {
-    return res.status(400).json({ message: 'Invalid OTP' });
+    // Development bypass - if OTP is "123456", accept it
+    if (process.env.NODE_ENV === 'development' && otp === '123456') {
+      console.log('Development bypass OTP used');
+      user.isVerified = true;
+      user.otp = undefined;
+      user.otpExpires = undefined;
+      await user.save();
+      return res.json({ message: 'OTP verified successfully (dev mode)' });
+    }
+
+    if ((user.otp || '').trim() !== (otp || '').trim()) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+    if (user.otpExpires < Date.now()) return res.status(400).json({ message: 'OTP expired' });
+
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'OTP verified successfully' });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ message: 'Error verifying OTP', error: error.message });
   }
-  if (user.otpExpires < Date.now()) return res.status(400).json({ message: 'OTP expired' });
-
-  user.isVerified = true;
-  user.otp = undefined;
-  user.otpExpires = undefined;
-  await user.save();
-
-  res.json({ message: 'OTP verified successfully' });
 });
 
 router.post('/set-password', async (req, res) => {
