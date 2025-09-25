@@ -1,6 +1,8 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const path = require('path');
 const mongoose = require('mongoose');
 const fs = require("fs");
@@ -39,8 +41,8 @@ app.use(cors({
   credentials: true
 }));
 
-// MongoDB connection using the provided URI
-mongoose.connect('mongodb+srv://vidyadonthagani:Vidya@cluster0.wixjktf.mongodb.net/resume?retryWrites=true&w=majority&appName=Cluster0')
+// MongoDB connection using environment variable
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/resume')
   .then(() => {
     console.log("✅ MongoDB connected to database:", mongoose.connection.db.databaseName);
     
@@ -54,8 +56,8 @@ mongoose.connect('mongodb+srv://vidyadonthagani:Vidya@cluster0.wixjktf.mongodb.n
     // Don't exit, continue running for testing purposes
   });
 
-const ADMIN_EMAIL = "hirewithnexthire@gmail.com"; 
-const ADMIN_PASSWORD = "azqsxwdcefv@011"; // Your specific admin password
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "hirewithnexthire@gmail.com"; 
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "azqsxwdcefv@011"; // Your specific admin password
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -156,8 +158,8 @@ router.post('/send-otp', async (req, res) => {
 const transporter = nodemailer.createTransport({ 
       service: 'gmail',
   auth: {
-    user: 'hirewithnexthire@gmail.com',      
-    pass: 'leey xxvf akda pjxe'         
+    user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',      
+    pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'         
   }
  });
   await transporter.sendMail({
@@ -202,8 +204,8 @@ router.post('/set-password', async (req, res) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'hirewithnexthire@gmail.com',
-      pass: 'leey xxvf akda pjxe'
+      user: process.env.EMAIL_USER || 'hirewithnexthire@gmail.com',
+      pass: process.env.EMAIL_PASS || 'leey xxvf akda pjxe'
     }
   });
 
