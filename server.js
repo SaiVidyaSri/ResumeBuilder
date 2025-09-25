@@ -119,7 +119,7 @@ app.get('/api/test-email', async (req, res) => {
         
         for (const config of emailConfigs) {
             try {
-                const transporter = nodemailer.createTransporter(config);
+                const transporter = nodemailer.createTransport(config);
                 await transporter.verify();
                 results.push({ config: config.name, status: 'success', message: 'Connection verified' });
             } catch (error) {
@@ -293,7 +293,7 @@ router.post('/send-otp', async (req, res) => {
       try {
         console.log(`Trying ${config.name} SMTP...`);
         
-        const transporter = nodemailer.createTransporter(config);
+        const transporter = nodemailer.createTransport(config);
         
         // Test the connection first
         await transporter.verify();
